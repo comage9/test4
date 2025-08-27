@@ -132,6 +132,30 @@
                 </div>
 
 
+                <!-- 통계/표 영역: 요일별 평균, 시간별 평균, 시간별 증감 평균 -->
+                <div id="range-stats-tables" class="mt-6 space-y-6">
+                    <div class="card bg-base-100 shadow">
+                        <div class="card-body">
+                            <h3 class="card-title text-sm">요일별 평균 출고 수량</h3>
+                            <div id="table-weekday-avg" class="overflow-x-auto text-sm"></div>
+                        </div>
+                    </div>
+                    <div class="card bg-base-100 shadow">
+                        <div class="card-body">
+                            <h3 class="card-title text-sm">시간별 평균 출고 수량</h3>
+                            <div id="table-hourly-avg" class="overflow-x-auto text-sm"></div>
+                        </div>
+                    </div>
+                    <div class="card bg-base-100 shadow">
+                        <div class="card-body">
+                            <h3 class="card-title text-sm">시간별 평균 증감 수량</h3>
+                            <div id="table-hourly-incr" class="overflow-x-auto text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+
                 
                 <div class="mt-4 text-sm text-base-content/70">
                     <p>• 0시부터 23시까지 시간별 누적 출고량을 나타냅니다 (23시가 하루 최종값)</p>
