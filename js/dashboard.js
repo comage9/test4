@@ -136,12 +136,18 @@ class Dashboard {
                 const s = (startDate.value || '').trim();
                 const e = (endDate.value || '').trim();
                 if (!s || !e) { alert('시작일과 종료일을 선택해 주세요'); return; }
+                // API base 보정: this.apiBase가 비어있으면 동일 오리진 사용(HTTP/S에서만)
+                const base = this.apiBase || ((location && /^https?:/.test(location.protocol)) ? location.origin : '');
+                if (!base) { alert('API 서버를 찾지 못했습니다. 서버를 실행 후 브라우저에서 http로 접속하세요.'); return; }
                 rangeBtn.disabled = true;
                 rangeResult.textContent = '';
                 try {
-                    const url = `${this.apiBase}/api/delivery/range?start=${encodeURIComponent(s)}&end=${encodeURIComponent(e)}`;
-                    const res = await fetch(url);
-                    const json = await res.json().catch(() => null);
+                    const url = `${base}/api/delivery/range?start=${encodeURIComponent(s)}&end=${encodeURIComponent(e)}`;
+                    console.log('Range fetch:', url);
+                    const res = await fetch(url, { cache: 'no-store' });
+                    const text = await res.text();
+                    let json = null;
+                    try { json = JSON.parse(text); } catch { json = null; }
                     if (res.ok && json && json.success && Array.isArray(json.data)) {
                         this.rangeMode = true;
                         this.data = json.data; // 범위 데이터로 교체
@@ -152,16 +158,19 @@ class Dashboard {
                         }
                         this.updateDashboard();
                     } else {
-                        const msg = (json && (json.message || json.error)) ? (json.message || json.error) : res.status;
+                        const msg = (json && (json.message || json.error)) ? (json.message || json.error) : `HTTP ${res.status}`;
+                        console.warn('Range fetch failed:', { status: res.status, body: text });
                         rangeResult.textContent = `조회 실패: ${msg}`;
                     }
                 } catch (e) {
+                    console.error('Range fetch error:', e);
                     rangeResult.textContent = '오류 발생';
                 } finally {
                     rangeBtn.disabled = false;
                 }
             });
         }
+
 
         // 다운로드 버튼들
         const exportExcelBtn = document.getElementById('export-excel-btn');

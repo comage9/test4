@@ -237,7 +237,11 @@
                         if (js && js.success) { apiBase = base; break; }
                     } catch (_) { /* try next */ }
                 }
-                if (!apiBase) console.warn('API 서버를 찾지 못했습니다. CSV 폴백을 시도합니다.');
+                if (!apiBase) {
+                    // http(s)로 열렸다면 동일 오리진을 기본 API로 시도
+                    if (/^https?:/.test(location.protocol)) { apiBase = location.origin; }
+                    else console.warn('API 서버를 찾지 못했습니다. CSV 폴백을 시도합니다.');
+                }
 
                 // 대시보드 초기화
                 const dashboard = new Dashboard(null, 'hourly-chart', { useApi: !!apiBase, apiBase });
