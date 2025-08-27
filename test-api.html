@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">생산일지 API 테스트</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">API 연결 테스트</h2>
+            <button id="test-api" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                API 테스트 실행
+            </button>
+            <div id="test-results" class="mt-4 p-4 bg-gray-50 rounded hidden">
+                <h3 class="font-semibold mb-2">테스트 결과:</h3>
+                <pre id="result-content" class="text-sm overflow-auto"></pre>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">실제 페이지 링크</h2>
+            <div class="space-y-2">
+                <a href="index.html" class="block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-center">
+                    메인 대시보드로 이동
+                </a>
+                <a href="production-log.html" class="block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-center">
+                    생산일지 페이지로 이동
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('test-api').addEventListener('click', async function() {
+            const resultsDiv = document.getElementById('test-results');
+            const contentPre = document.getElementById('result-content');
+            
+            resultsDiv.classList.remove('hidden');
+            contentPre.textContent = '테스트 실행 중...';
+            
+            try {
+                console.log('API 테스트 시작');
+                
+                // 1. 기본 API 테스트
+                const response = await fetch('/api/production-log');
+                
+                console.log('응답 상태:', response.status);
+                console.log('응답 헤더:', response.headers.get('content-type'));
+                
+                const responseText = await response.text();
+                console.log('응답 길이:', responseText.length);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('JSON 파싱 성공');
+                } catch (parseError) {
+                    console.error('JSON 파싱 실패:', parseError);
+                    throw new Error('JSON 파싱 실패: ' + parseError.message + '\n응답: ' + responseText.substring(0, 200));
+                }
+                
+                // 결과 표시
+                const testResults = {
+                    status: response.status,
+                    contentType: response.headers.get('content-type'),
+                    success: result.success,
+                    dataLength: result.data ? result.data.length : 0,
+                    latestDate: result.latestDate,
+                    totalRecords: result.totalRecords,
+                    availableDates: result.allDates ? result.allDates.length : 0
+                };
+                
+                contentPre.textContent = JSON.stringify(testResults, null, 2);
+                
+            } catch (error) {
+                console.error('테스트 실패:', error);
+                contentPre.textContent = 'ERROR: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

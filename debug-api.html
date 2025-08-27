@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Debug Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">생산일지 API 디버그 도구</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">현재 연결 정보</h2>
+            <div class="space-y-2">
+                <p><strong>현재 URL:</strong> <span id="current-url"></span></p>
+                <p><strong>호스트:</strong> <span id="current-host"></span></p>
+                <p><strong>포트:</strong> <span id="current-port"></span></p>
+                <p><strong>프로토콜:</strong> <span id="current-protocol"></span></p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">API 테스트</h2>
+            <div class="space-y-4">
+                <div>
+                    <button id="test-basic-api" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mr-2">
+                        기본 API 테스트
+                    </button>
+                    <button id="test-events-api" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                        이벤트 API 테스트
+                    </button>
+                    <button id="clear-results" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                        결과 지우기
+                    </button>
+                </div>
+                <div id="test-results" class="mt-4 p-4 bg-gray-50 rounded max-h-96 overflow-auto">
+                    <p class="text-gray-500 text-center">테스트 버튼을 클릭하여 API를 테스트하세요.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">페이지 링크</h2>
+            <div class="space-y-2">
+                <a href="index.html" class="block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-center">
+                    메인 대시보드 (index.html)
+                </a>
+                <a href="production-log.html" class="block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-center">
+                    생산일지 페이지 (production-log.html)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 현재 연결 정보 표시
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('current-host').textContent = window.location.hostname;
+        document.getElementById('current-port').textContent = window.location.port || '기본포트';
+        document.getElementById('current-protocol').textContent = window.location.protocol;
+
+        const resultsDiv = document.getElementById('test-results');
+
+        function addResult(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-blue-600';
+            
+            const resultElement = document.createElement('div');
+            resultElement.className = `mb-2 p-2 border-l-4 ${type === 'error' ? 'border-red-500 bg-red-50' : type === 'success' ? 'border-green-500 bg-green-50' : 'border-blue-500 bg-blue-50'}`;
+            resultElement.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <pre class="${colorClass} flex-1">${message}</pre>
+                    <span class="text-xs text-gray-500 ml-2">${timestamp}</span>
+                </div>
+            `;
+            
+            resultsDiv.appendChild(resultElement);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // 기본 API 테스트
+        document.getElementById('test-basic-api').addEventListener('click', async function() {
+            addResult('기본 API 테스트 시작...', 'info');
+            
+            try {
+                const apiUrl = '/api/production-log';
+                addResult(`요청 URL: ${window.location.origin}${apiUrl}`, 'info');
+                
+                const response = await fetch(apiUrl);
+                addResult(`응답 상태: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                addResult(`Content-Type: ${response.headers.get('content-type')}`, 'info');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const responseText = await response.text();
+                addResult(`응답 크기: ${responseText.length} bytes`, 'info');
+                
+                if (responseText.length > 0) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        addResult(`JSON 파싱 성공`, 'success');
+                        addResult(`성공 여부: ${data.success}`, data.success ? 'success' : 'error');
+                        addResult(`데이터 수: ${data.data ? data.data.length : 0}개`, 'info');
+                        addResult(`최신 날짜: ${data.latestDate || 'N/A'}`, 'info');
+                        addResult(`총 레코드: ${data.totalRecords || 0}개`, 'info');
+                    } catch (parseError) {
+                        addResult(`JSON 파싱 실패: ${parseError.message}`, 'error');
+                        addResult(`응답 내용 (처음 200자): ${responseText.substring(0, 200)}`, 'error');
+                    }
+                } else {
+                    addResult('빈 응답 받음', 'error');
+                }
+                
+            } catch (error) {
+                addResult(`테스트 실패: ${error.message}`, 'error');
+                console.error('API 테스트 실패:', error);
+            }
+        });
+
+        // 이벤트 API 테스트
+        document.getElementById('test-events-api').addEventListener('click', function() {
+            addResult('이벤트 API 테스트 시작...', 'info');
+            
+            try {
+                const eventUrl = '/api/production-log/events';
+                addResult(`이벤트 URL: ${window.location.origin}${eventUrl}`, 'info');
+                
+                const eventSource = new EventSource(eventUrl);
+                
+                eventSource.onopen = function() {
+                    addResult('이벤트 스트림 연결 성공', 'success');
+                };
+                
+                eventSource.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addResult(`이벤트 수신: ${JSON.stringify(data)}`, 'success');
+                    } catch (error) {
+                        addResult(`이벤트 데이터: ${event.data}`, 'info');
+                    }
+                };
+                
+                eventSource.onerror = function(error) {
+                    addResult(`이벤트 스트림 오류: ${error.type || 'unknown'}`, 'error');
+                    eventSource.close();
+                };
+                
+                // 5초 후 연결 종료
+                setTimeout(() => {
+                    eventSource.close();
+                    addResult('이벤트 스트림 테스트 완료 (5초 후 종료)', 'info');
+                }, 5000);
+                
+            } catch (error) {
+                addResult(`이벤트 API 테스트 실패: ${error.message}`, 'error');
+            }
+        });
+
+        // 결과 지우기
+        document.getElementById('clear-results').addEventListener('click', function() {
+            resultsDiv.innerHTML = '<p class="text-gray-500 text-center">테스트 버튼을 클릭하여 API를 테스트하세요.</p>';
+        });
+
+        // 페이지 로드 시 자동 체크
+        addResult('페이지 로드 완료. 연결 정보를 확인하세요.', 'info');
+    </script>
+</body>
+</html>

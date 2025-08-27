@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출고 현황 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script>
+        // Chart.js datalabels 플러그인 전역 등록
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+            console.log('ChartDataLabels 플러그인이 전역으로 등록되었습니다.');
+        }
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-base-100">
+    <!-- 헤더 -->
+    <header class="navbar bg-primary text-primary-content shadow-lg">
+        <div class="navbar-start">
+            <h1 class="text-xl font-bold">통합 대시보드</h1>
+        </div>
+        <div class="navbar-end">
+            <div class="flex items-center gap-4">
+                <div class="badge badge-success" id="status-badge">연결됨</div>
+                <button class="btn btn-sm btn-ghost" id="refresh-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    새로고침
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 탭 네비게이션 -->
+    <nav class="bg-base-200 border-b">
+        <div class="container mx-auto">
+            <div class="tabs tabs-boxed bg-transparent">
+                <a class="tab tab-active" id="delivery-tab" onclick="switchTab('delivery')">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    출고 현황
+                </a>
+                <a class="tab" id="production-tab" onclick="window.location.href='production-log.html'">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    생산계획
+                </a>
+                <a class="tab" id="sales-tab" onclick="switchTab('sales')">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    비즈니스 분석
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 출고 현황 대시보드 -->
+    <div id="delivery-dashboard" class="dashboard-content">
+        <main class="container mx-auto p-6">
+        <!-- 통계 및 데이터 입력 영역 -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+            <!-- 통계 카드 -->
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">오늘 총 출고량</div>
+                <div class="stat-value text-primary" id="today-total">0</div>
+                <div class="stat-desc" id="today-desc">현재까지</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">어제 마지막 출고량</div>
+                <div class="stat-value text-secondary" id="yesterday-last">0</div>
+                <div class="stat-desc" id="yesterday-desc">최종 기록</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">오늘 예상 출고량</div>
+                <div class="stat-value text-accent" id="max-hourly">0</div>
+                <div class="stat-desc" id="max-hourly-desc">23시 예상값</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">평균 시간당 출고량</div>
+                <div class="stat-value text-info" id="avg-hourly">0</div>
+                <div class="stat-desc" id="avg-hourly-desc">이전 3일 평균</div>
+            </div>
+
+            <!-- 데이터 입력 영역 -->
+            <div class="card bg-base-200 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title text-base">오늘자 시간별 데이터 입력</h2>
+                    <div id="dynamic-data-entry-container"></div>
+                    <div id="form-feedback" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 영역 -->
+        <div class="card bg-base-200 shadow-xl">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">시간별 출고 현황 (최근 3일)</h2>
+                    <div class="flex gap-2 items-center">
+                        <div class="flex gap-1">
+                            <div class="badge badge-primary">오늘</div>
+                            <div class="badge badge-error">어제</div>
+                            <div class="badge badge-success">그저께</div>
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                            <button id="import-default-btn" class="btn btn-xs">기본 CSV 재적재</button>
+                            <button id="export-json-btn" class="btn btn-xs">다운로드 JSON</button>
+                            <button id="export-excel-btn" class="btn btn-xs">다운로드 Excel</button>
+                            <button id="upload-btn" class="btn btn-xs btn-primary">데이터 업로드</button>
+                            <input id="file-input" type="file" accept=".json,.csv,.txt,.xlsx,.xls" class="hidden" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-full h-[700px]">
+                    <canvas id="hourly-chart"></canvas>
+                </div>
+
+
+                
+                <div class="mt-4 text-sm text-base-content/70">
+                    <p>• 0시부터 23시까지 시간별 누적 출고량을 나타냅니다 (23시가 하루 최종값)</p>
+                    <p>• 오늘 데이터는 실선, 어제는 점선, 그저께는 긴 점선으로 표시됩니다</p>
+                    <p>• 오늘 데이터의 각 포인트에는 값이 라벨로 표시되며, 예측값은 * 표시됩니다</p>
+                    <p>• 마지막 업데이트: <span id="last-update">-</span></p>
+                </div>
+                
+                <!-- 예측 정보 패널 -->
+                <div class="collapse collapse-arrow bg-base-300 mt-4" id="prediction-info">
+                    <input type="checkbox" />
+                    <div class="collapse-title text-sm font-medium">
+                        예측 모델 정보 보기
+                    </div>
+                    <div class="collapse-content">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <h4 class="font-semibold mb-2">적용된 예측 모델:</h4>
+                                <ul class="space-y-1">
+                                    <li>• 요일별 패턴 분석 (25%)</li>
+                                    <li>• 시간대별 성장 패턴 (20%)</li>
+                                    <li>• 최근 트렌드 분석 (25%)</li>
+                                    <li>• 계절성 패턴 (15%)</li>
+                                    <li>• 지수 평활법 (15%)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-2">예측 정확도 개선 요소:</h4>
+                                <ul class="space-y-1">
+                                    <li>• 같은 요일 과거 데이터 활용</li>
+                                    <li>• 시간대별 고유 증가 패턴</li>
+                                    <li>• 최근 3시간 트렌드 반영</li>
+                                    <li>• 주말/평일 구분 적용</li>
+                                    <li>• 다중 모델 가중 평균</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-3 bg-info/10 rounded">
+                            <p class="text-xs text-info-content">
+                                <strong>참고:</strong> 예측값은 과거 데이터 패턴을 기반으로 계산되며, 
+                                실제 결과와 차이가 있을 수 있습니다. 더 많은 과거 데이터가 축적될수록 예측 정확도가 향상됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </main>
+    </div>
+
+
+    <!-- 비즈니스 분석 대시보드 -->
+    <div id="sales-dashboard" class="dashboard-content hidden">
+        <iframe src="sales/index.html" class="w-full h-screen border-0"></iframe>
+    </div>
+
+    <!-- 로딩 모달 -->
+    <dialog id="loading-modal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">데이터 로딩 중...</h3>
+            <div class="py-4">
+                <progress class="progress progress-primary w-full"></progress>
+            </div>
+            <p class="text-sm text-base-content/70">구글 시트에서 데이터를 가져오고 있습니다.</p>
+        </div>
+    </dialog>
+
+    <!-- 에러 모달 -->
+    <dialog id="error-modal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg text-error">오류 발생</h3>
+            <p class="py-4" id="error-message">알 수 없는 오류가 발생했습니다.</p>
+            <div class="modal-action">
+                <button class="btn" onclick="document.getElementById('error-modal').close()">확인</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- JavaScript -->
+    <script src="js/dashboard.js"></script>
+    <script>
+        // 페이지 로드 시 초기화 (구글 시트 사용 중단 → 서버 API 사용)
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('Page loaded, initializing dashboard...');
+
+                // API 베이스 자동 탐지: 현재 오리진 → 5173~5180 순회
+                const host = location.hostname || 'localhost';
+                const candidates = [];
+                candidates.push(location.origin);
+                for (let p = 5173; p <= 5180; p++) {
+                    const base = `${location.protocol}//${host}:${p}`;
+                    if (!candidates.includes(base)) candidates.push(base);
+                }
+
+                let apiBase = '';
+                for (const base of candidates) {
+                    try {
+                        const res = await fetch(`${base}/api/delivery/hourly?days=1`, { cache: 'no-store' });
+                        if (!res.ok) continue;
+                        const js = await res.json();
+                        if (js && js.success) { apiBase = base; break; }
+                    } catch (_) { /* try next */ }
+                }
+                if (!apiBase) console.warn('API 서버를 찾지 못했습니다. CSV 폴백을 시도합니다.');
+
+                // 대시보드 초기화
+                const dashboard = new Dashboard(null, 'hourly-chart', { useApi: !!apiBase, apiBase });
+
+                // 전역에서 접근 가능하도록 설정
+                window.dashboard = dashboard;
+
+                await dashboard.init();
+
+                // 자동 새로고침 활성화 (10분 주기)
+                dashboard.startAutoRefresh(600000); // 10분마다 새로고침
+
+                console.log('Dashboard initialization completed successfully');
+
+            } catch (error) {
+                console.error('대시보드 초기화 실패:', error);
+                alert('대시보드 초기화에 실패했습니다: ' + error.message);
+            }
+        });
+
+        // 탭 전환 함수
+        function switchTab(tabName) {
+            // 모든 탭과 대시보드 숨기기
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('tab-active'));
+            document.querySelectorAll('.dashboard-content').forEach(content => content.classList.add('hidden'));
+
+            // 선택된 탭과 대시보드 보이기
+            document.getElementById(tabName + '-tab').classList.add('tab-active');
+            document.getElementById(tabName + '-dashboard').classList.remove('hidden');
+
+            // 상태 배지 업데이트
+            const statusBadge = document.getElementById('status-badge');
+            if (tabName === 'delivery') {
+                statusBadge.style.display = 'block';
+            } else {
+                statusBadge.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

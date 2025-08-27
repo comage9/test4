@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차트 라벨 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .chart-container { width: 800px; height: 400px; margin: 20px auto; }
+        .status { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>차트 라벨링 테스트</h1>
+    
+    <div class="status" id="status">
+        <h3>플러그인 상태 확인:</h3>
+        <div id="plugin-status"></div>
+    </div>
+    
+    <div class="chart-container">
+        <canvas id="testChart"></canvas>
+    </div>
+    
+    <script>
+        // 플러그인 상태 확인
+        function checkPluginStatus() {
+            const statusDiv = document.getElementById('plugin-status');
+            let status = '';
+            
+            status += `Chart.js 로드됨: ${typeof Chart !== 'undefined'}<br>`;
+            status += `Chart.js 버전: ${typeof Chart !== 'undefined' ? Chart.version : 'N/A'}<br>`;
+            status += `ChartDataLabels 로드됨: ${typeof ChartDataLabels !== 'undefined'}<br>`;
+            
+            if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+                status += `ChartDataLabels 등록 완료<br>`;
+                status += `등록된 플러그인: ${Chart.registry.plugins.items.map(p => p.id).join(', ')}<br>`;
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        // 테스트 차트 생성
+        function createTestChart() {
+            const ctx = document.getElementById('testChart').getContext('2d');
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00'],
+                    datasets: [{
+                        label: '테스트 데이터',
+                        data: [10, 25, 45, 78, 120, 150],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        datalabels: {
+                            display: true,
+                            color: '#3b82f6',
+                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            borderColor: '#3b82f6',
+                            borderRadius: 4,
+                            borderWidth: 1,
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: function(value) {
+                                return value.toLocaleString();
+                            },
+                            padding: {
+                                top: 2,
+                                bottom: 2,
+                                left: 4,
+                                right: 4
+                            },
+                            anchor: 'end',
+                            align: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            console.log('테스트 차트 생성 완료:', chart);
+            console.log('차트 플러그인:', chart.config.plugins);
+        }
+        
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            checkPluginStatus();
+            createTestChart();
+        });
+    </script>
+</body>
+</html>

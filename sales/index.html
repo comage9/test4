@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비즈니스 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0"></script>
+</head>
+<body class="bg-base-100">
+    <div class="container mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4">비즈니스 분석</h1>
+
+        <div class="card bg-base-200 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title">데이터 관리 및 필터</h2>
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        <input type="file" id="csv-upload" class="file-input file-input-bordered w-full max-w-xs" accept=".csv" />
+                        <button id="upload-btn" class="btn btn-primary">업로드</button>
+                        <button id="download-btn" class="btn btn-secondary">다운로드</button>
+                    </div>
+                    <div class="flex space-x-2 items-center">
+                        <label for="start-date">시작일:</label>
+                        <input type="date" id="start-date" class="input input-bordered">
+                        <label for="end-date">종료일:</label>
+                        <input type="date" id="end-date" class="input input-bordered">
+                        <button id="filter-btn" class="btn btn-accent">조회</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="card bg-base-200 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title">카테고리별 판매금액</h2>
+                    <canvas id="category-chart"></canvas>
+                </div>
+            </div>
+            <div class="card bg-base-200 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title">일별 판매 추이</h2>
+                    <canvas id="trend-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title">판매 데이터</h2>
+                <div class="overflow-x-auto">
+                    <table id="data-table" class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>일자</th>
+                                <th>바코드</th>
+                                <th>수량(박스)</th>
+                                <th>수량(낱개)</th>
+                                <th>품목</th>
+                                <th>분류</th>
+                                <th>판매금액</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="btn-group mt-4 self-center">
+                    <button id="prev-page" class="btn">«</button>
+                    <button id="page-info" class="btn">Page 1</button>
+                    <button id="next-page" class="btn">»</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/data-manager.js"></script>
+    <script src="js/chart-renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Labels Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+    <h1>Chart Labels 테스트</h1>
+    <div style="width: 800px; height: 400px; margin: 20px auto;">
+        <canvas id="testChart"></canvas>
+    </div>
+    
+    <div id="status" style="margin: 20px; padding: 10px; background: #f0f0f0;">
+        <h3>플러그인 상태:</h3>
+        <div id="pluginStatus"></div>
+    </div>
+    
+    <script>
+        // 플러그인 상태 확인
+        const statusDiv = document.getElementById('pluginStatus');
+        statusDiv.innerHTML = `
+            <p>ChartDataLabels 로드됨: ${typeof ChartDataLabels !== 'undefined'}</p>
+            <p>Chart.js 버전: ${Chart.version}</p>
+        `;
+        
+        // 플러그인 등록
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+            console.log('ChartDataLabels 등록 완료');
+        }
+        
+        // 테스트 차트 생성
+        const ctx = document.getElementById('testChart').getContext('2d');
+        const testChart = new Chart(ctx, {
+            type: 'line',
+            plugins: [ChartDataLabels],
+            data: {
+                labels: ['09:00', '10:00', '11:00', '12:00', '13:00'],
+                datasets: [{
+                    label: '테스트 데이터',
+                    data: [10, 25, 40, 60, 80],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        display: true,
+                        color: '#000',
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        font: {
+                            weight: 'bold',
+                            size: 12
+                        },
+                        formatter: function(value) {
+                            return value.toLocaleString();
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        padding: 4
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        console.log('테스트 차트 생성 완료:', testChart);
+        console.log('차트 플러그인:', testChart.config.plugins);
+    </script>
+</body>
+</html>

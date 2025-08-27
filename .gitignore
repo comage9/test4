@@ -1,0 +1,31 @@
+# Node & build
+node_modules/
+dist/
+.venv/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Binaries and large build outputs
+*.exe
+delivery-dashboard-linux
+delivery-dashboard-macos
+delivery-dashboard-win.exe
+delivery-dashboard.exe
+
+# Databases and uploads
+*.db
+uploads/
+
+# Secrets
+credentials.json
+.env
+env
+env.*
+*.Zone.Identifier
+
+# CSV and data files are kept by default.
+# If you prefer to exclude big CSVs or JSON backups, add patterns here.
