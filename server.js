@@ -1037,6 +1037,21 @@ function startServer(port, retries = 10) {
 startServer(Number(PORT) || 5173);
 
 // 프로세스 종료 시 정리
+
+
+// DB 경로/상태 정보 (운영 점검용)
+app.get('/api/delivery/info', (req, res) => {
+  try {
+    if (!deliveryDB) return res.status(500).json({ success: false, message: 'Delivery DB not initialized' });
+    const fs = require('fs');
+    const pathStr = deliveryDB.dbPath;
+    let stat = null;
+    try { const s = fs.statSync(pathStr); stat = { size: s.size, mtime: s.mtime }; } catch {}
+    res.json({ success: true, dbPath: pathStr, stat });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
 process.on('SIGINT', () => {
     console.log('서버 종료 중...');
     

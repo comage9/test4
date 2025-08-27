@@ -4,9 +4,15 @@ const path = require('path');
 // 간단한 JSON 기반 출고 현황 DB
 class DeliveryDatabase {
   constructor() {
-    this.dbPath = process.pkg
-      ? path.join(path.dirname(process.execPath), 'delivery-data.json')
-      : path.join(__dirname, 'delivery-data.json');
+    const envPath = process.env.DELIVERY_DB_PATH && String(process.env.DELIVERY_DB_PATH).trim();
+    if (envPath) {
+      this.dbPath = path.resolve(envPath);
+      try { fs.mkdirSync(path.dirname(this.dbPath), { recursive: true }); } catch {}
+    } else {
+      this.dbPath = process.pkg
+        ? path.join(path.dirname(process.execPath), 'delivery-data.json')
+        : path.join(__dirname, 'delivery-data.json');
+    }
 
     this._init();
   }
@@ -29,7 +35,15 @@ class DeliveryDatabase {
   _write(data) {
     data.metadata = data.metadata || {};
     data.metadata.updated_at = new Date().toISOString();
-    fs.writeFileSync(this.dbPath, JSON.stringify(data, null, 2));
+    const tmp = this.dbPath + '.tmp';
+    require('fs').writeFileSync(tmp, JSON.stringify(data, null, 2));
+    try {
+      const bak = this.dbPath + '.bak';
+      if (require('fs').existsSync(this.dbPath)) {
+        try { require('fs').copyFileSync(this.dbPath, bak); } catch {}
+      }
+    } catch {}
+    require('fs').renameSync(tmp, this.dbPath);
   }
 
   // YYYY-MM-DD 문자열 반환
