@@ -1,5 +1,87 @@
 # Chart MCP 대시보드 플랫폼
 
+## 🚀 Quickstart
+- Local (WSL/Windows/macOS/Linux):
+  - Requirements: Node.js 18+ (권장 20), npm
+  - Install: `npm ci`
+  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5173`
+  - Open: `http://localhost:5173`
+- Data persistence:
+  - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
+  - 생산 DB: `production.db` (SQLite). 첫 실행 시 템플릿/엑셀에서 시드될 수 있음.
+  - 파일 동기화 시 `delivery-data.json`은 제외하도록 구성됨.
+
+## 💻 Codespaces
+- GitHub UI: 저장소에서 Code → Codespaces → Create on `main`
+- GitHub CLI: `gh auth login` → `gh codespace create -R comage9/test4 -b main` → `gh codespace code -R comage9/test4`
+- 최초 실행: `npm ci` → `node server.js`
+
+## 🔄 WSL ↔ Windows 동기화
+- 폴더
+  - WSL: `~/test4_source_backup`
+  - Windows: `E:\python\test4_source_backup (1)\test4_source_backup`
+- rsync 스크립트: `bash ~/test4_source_backup/sync-with-windows.sh`
+  - 제외: `node_modules`, `dist`, `*.exe`, `uploads`, `*.db`, `delivery-dashboard-*`, `delivery-data.json`, `server.log`
+- 로컬 Git 원격
+  - bare: `E:\python\test4_source_backup (1)\test4_bare.git` → remote 이름 `win`
+  - 푸시: WSL에서 `git push win main` → Windows에서 `git pull win main`
+
+## 🌐 Git remotes
+- origin (GitHub): `git@github.com:comage9/test4.git` 또는 `https://github.com/comage9/test4.git`
+  - Windows에서 네트워크 가능 시: `git push -u origin main`
+- win (로컬 Windows bare): `/mnt/e/python/test4_source_backup (1)/test4_bare.git`
+
+## 📡 주요 API (발췌)
+- GET `/api/delivery/hourly?days=14`: 최근 N일 출고(시간별 누적)
+- POST `/api/delivery/hourly`: 오늘자 시간별 누적 저장 `[ { hour, quantity }, ... ]`
+- POST `/api/delivery/import-default-csv`: 기본 CSV에서 재적재(빈 DB일 때만 시드)
+- GET `/api/delivery/export.json|.xlsx`: 전체 데이터 다운로드
+- POST `/api/delivery/import`: JSON/CSV 업로드로 전체 교체
+
+---
+# Chart MCP 대시보드 플랫폼
+
+## 🚀 Quickstart
+- Local (WSL/Windows/macOS/Linux):
+  - Requirements: Node.js 18+ (권장 20), npm
+  - Install: `npm ci`
+  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5173`
+  - Open: `http://localhost:5173`
+- Data persistence:
+  - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
+  - 생산 DB: `production.db` (SQLite). 첫 실행 시 템플릿/엑셀에서 시드될 수 있음.
+  - 파일 동기화 시 `delivery-data.json`은 제외하도록 구성됨.
+
+## 💻 Codespaces
+- GitHub UI: 저장소에서 Code → Codespaces → Create on `main`
+- GitHub CLI: `gh auth login` → `gh codespace create -R comage9/test4 -b main` → `gh codespace code -R comage9/test4`
+- 최초 실행: `npm ci` → `node server.js`
+
+## 🔄 WSL ↔ Windows 동기화
+- 폴더
+  - WSL: `~/test4_source_backup`
+  - Windows: `E:\python\test4_source_backup (1)\test4_source_backup`
+- rsync 스크립트: `bash ~/test4_source_backup/sync-with-windows.sh`
+  - 제외: `node_modules`, `dist`, `*.exe`, `uploads`, `*.db`, `delivery-dashboard-*`, `delivery-data.json`, `server.log`
+- 로컬 Git 원격
+  - bare: `E:\python\test4_source_backup (1)\test4_bare.git` → remote 이름 `win`
+  - 푸시: WSL에서 `git push win main` → Windows에서 `git pull win main`
+
+## 🌐 Git remotes
+- origin (GitHub): `git@github.com:comage9/test4.git` 또는 `https://github.com/comage9/test4.git`
+  - Windows에서 네트워크 가능 시: `git push -u origin main`
+- win (로컬 Windows bare): `/mnt/e/python/test4_source_backup (1)/test4_bare.git`
+
+## 📡 주요 API (발췌)
+- GET `/api/delivery/hourly?days=14`: 최근 N일 출고(시간별 누적)
+- POST `/api/delivery/hourly`: 오늘자 시간별 누적 저장 `[ { hour, quantity }, ... ]`
+- POST `/api/delivery/import-default-csv`: 기본 CSV에서 재적재(빈 DB일 때만 시드)
+- GET `/api/delivery/export.json|.xlsx`: 전체 데이터 다운로드
+- POST `/api/delivery/import`: JSON/CSV 업로드로 전체 교체
+
+---
+# Chart MCP 대시보드 플랫폼
+
 Chart MCP(Model Context Protocol)를 활용한 차세대 대시보드 플랫폼입니다. 기존 출고 현황 대시보드의 구조적 문제를 해결하고, 실시간 데이터 스트리밍, 사용자 커스터마이징, 확장 가능한 차트 시스템을 제공합니다.
 
 ## 📋 프로젝트 개선 사항
