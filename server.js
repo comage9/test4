@@ -426,6 +426,27 @@ app.post('/api/delivery/import-excel', uploadAny.single('file'), (req, res) => {
 });
 
 // 전일 출고 총합 조회 API
+
+// 날짜 범위 출고 데이터 조회 API (포함 범위)
+app.get('/api/delivery/range', (req, res) => {
+  try {
+    if (!deliveryDB) return res.status(500).json({ success: false, message: 'Delivery DB not initialized' });
+    const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ success: false, message: 'start and end required (YYYY-MM-DD)' });
+    const s = new Date(String(start));
+    const e = new Date(String(end));
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) return res.status(400).json({ success: false, message: 'invalid date' });
+    const sIso = DeliveryDatabase.toIsoDate(s);
+    const eIso = DeliveryDatabase.toIsoDate(e);
+    if (sIso > eIso) return res.status(400).json({ success: false, message: 'start must be <= end' });
+    const all = deliveryDB.getAll();
+    const data = all.filter(r => r.date >= sIso && r.date <= eIso);
+    res.json({ success: true, start: sIso, end: eIso, count: data.length, data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 app.get('/api/delivery/previous-total', (req, res) => {
   try {
     if (!deliveryDB) return res.status(500).json({ success: false, message: 'Delivery DB not initialized' });

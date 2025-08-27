@@ -120,33 +120,40 @@ class Dashboard {
             });
         }
 
-        // 전일 출고 수량 조회
-        const prevBtn = document.getElementById('prev-day-search-btn');
-        const prevDate = document.getElementById('prev-date');
-        const prevResult = document.getElementById('prev-day-result');
-        if (prevBtn && prevDate) {
-            // 기본값: 오늘 날짜로 설정
+        // 기간 출고 수량 조회 (범위)
+        const rangeBtn = document.getElementById('range-search-btn');
+        const startDate = document.getElementById('start-date');
+        const endDate = document.getElementById('end-date');
+        const rangeResult = document.getElementById('range-result');
+        if (rangeBtn && startDate && endDate) {
             try {
                 const today = new Date();
-                prevDate.value = today.toISOString().slice(0, 10);
+                const iso = today.toISOString().slice(0, 10);
+                startDate.value = iso;
+                endDate.value = iso;
             } catch {}
-            prevBtn.addEventListener('click', async () => {
-                const d = (prevDate.value || '').trim();
-                if (!d) { alert('날짜를 선택해 주세요'); return; }
-                prevBtn.disabled = true;
+            rangeBtn.addEventListener('click', async () => {
+                const s = (startDate.value || '').trim();
+                const e = (endDate.value || '').trim();
+                if (!s || !e) { alert('시작일과 종료일을 선택해 주세요'); return; }
+                rangeBtn.disabled = true;
+                rangeResult.textContent = '';
                 try {
-                    const url = `${this.apiBase}/api/delivery/previous-total?date=${encodeURIComponent(d)}`;
+                    const url = `${this.apiBase}/api/delivery/range?start=${encodeURIComponent(s)}&end=${encodeURIComponent(e)}`;
                     const res = await fetch(url);
                     const json = await res.json().catch(() => null);
-                    if (res.ok && json && json.success) {
-                        prevResult.textContent = `${json.prevDate} 전일 총합: ${json.total}`;
+                    if (res.ok && json && json.success && Array.isArray(json.data)) {
+                        this.rangeMode = true;
+                        this.data = json.data; // 범위 데이터로 교체
+                        rangeResult.textContent = `${json.start} ~ ${json.end} (${json.count}일)`;
+                        this.updateDashboard();
                     } else {
-                        prevResult.textContent = '조회 실패';
+                        rangeResult.textContent = '조회 실패';
                     }
                 } catch (e) {
-                    prevResult.textContent = '오류 발생';
+                    rangeResult.textContent = '오류 발생';
                 } finally {
-                    prevBtn.disabled = false;
+                    rangeBtn.disabled = false;
                 }
             });
         }
@@ -209,6 +216,7 @@ class Dashboard {
                 if (!res.ok) throw new Error(`API status ${res.status}`);
                 const json = await res.json();
                 if (json && json.success && Array.isArray(json.data)) {
+                    this.rangeMode = false; // 기본 로드 시 범위 모드 해제
                     this.data = json.data;
                     // 데이터 정렬: 1. 날짜 내림차순, 2. 기계번호 오름차순 (기계번호가 있는 경우)
                     this.data.sort((a, b) => {
@@ -1192,7 +1200,60 @@ class Dashboard {
 
         console.log('Updating chart with data length:', this.data.length);
 
-        const hours = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0'));
+        const hours = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0'))
+        // 범위 모드: 선택 기간에 대한 라인들 + 시간대 평균 라인
+        if (this.rangeMode) {
+            try {
+                const labels = hours.map(h => h + ':00');
+                const days = [...this.data].sort((a,b)=>a.date.localeCompare(b.date));
+                const palette = ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6','#06b6d4','#d946ef','#10b981','#f43f5e','#64748b'];
+                const datasets = [];
+                days.forEach((d, idx) => {
+                    const values = hours.map(h => {
+                        const v = parseInt(d[`hour_${h}`]);
+                        return (v && v > 0) ? v : null;
+                    });
+                    datasets.push({
+                        label: d.date,
+                        data: values,
+                        borderColor: palette[idx % palette.length],
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.8,
+                        fill: false,
+                        tension: 0.35,
+                        spanGaps: true,
+                        pointRadius: 2,
+                        datalabels: { display: false }
+                    });
+                });
+                const avg = hours.map((h) => {
+                    let sum=0, cnt=0;
+                    for (const d of days) {
+                        const v = parseInt(d[`hour_${h}`]);
+                        if (v && v>0) { sum+=v; cnt++; }
+                    }
+                    return cnt>0 ? Math.round(sum/cnt) : null;
+                });
+                datasets.push({
+                    label: '기간 평균',
+                    data: avg,
+                    borderColor: '#111827',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2.5,
+                    borderDash: [6,4],
+                    tension: 0.3,
+                    pointRadius: 0,
+                    datalabels: { display: false }
+                });
+                this.chart.data.labels = labels;
+                this.chart.data.datasets = datasets;
+                this.chart.update();
+                console.log('Range-mode chart updated with', datasets.length, 'datasets');
+                return; // 범위 모드 처리 종료
+            } catch (e) {
+                console.error('Range-mode chart update failed:', e);
+            }
+        }
         
         // 최근 3일 데이터 가져오기
         const recentData = this.data.slice(-3);
