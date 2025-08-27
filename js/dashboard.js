@@ -588,7 +588,6 @@ class Dashboard {
         this.updateChart();
         this.updateLastUpdate();
         this.renderDataEntryForm(); // 데이터 입력 폼 렌더링 추가
-        this.renderStatsTables(); // 표 렌더링
     }
 
     updateStats() {
@@ -1224,39 +1223,25 @@ class Dashboard {
                 const days = [...this.data].sort((a,b)=>a.date.localeCompare(b.date));
                 const palette = ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6','#06b6d4','#d946ef','#10b981','#f43f5e','#64748b'];
                 const datasets = [];
-                // 총합 기준으로 최저/중간/최고 라벨링을 위해 일별 총합 계산
-                const dailyTotals = days.map(d=>{ for (let h=23; h>=0; h--){ const v=parseInt(d['hour_'+String(h).padStart(2,'0')])||0; if (v>0) return v; } return parseInt(d.total)||0; });
-                const sortedIdx=[...dailyTotals.keys()].sort((i,j)=>dailyTotals[i]-dailyTotals[j]);
-                const minIdx=sortedIdx.length?sortedIdx[0]:-1;
-                const medIdx=sortedIdx.length?sortedIdx[Math.floor(sortedIdx.length/2)]:-1;
-                const maxIdx=sortedIdx.length?sortedIdx[sortedIdx.length-1]:-1;
-                // Per-day datasets
                 days.forEach((d, idx) => {
                     const values = hours.map(h => {
                         const v = parseInt(d[`hour_${h}`]);
                         return (v && v > 0) ? v : null;
                     });
-                    let label = d.date; let bWidth=1.8; let bColor=palette[idx % palette.length]; let showLabel=false;
-                    if (idx===minIdx) { label += ' (최저)'; bWidth=2.2; showLabel=true; }
-                    if (idx===medIdx) { label += ' (중간)'; bWidth=2.2; showLabel=true; }
-                    if (idx===maxIdx) { label += ' (최고)'; bWidth=2.2; showLabel=true; }
-                    const ds={
-                        label,
+                    datasets.push({
+                        label: d.date,
                         data: values,
-                        borderColor: bColor,
+                        borderColor: palette[idx % palette.length],
                         backgroundColor: 'transparent',
-                        borderWidth: bWidth,
+                        borderWidth: 1.8,
                         fill: false,
                         tension: 0.35,
                         spanGaps: true,
                         pointRadius: 2,
-                        datalabels: {
-                            display: showLabel ? function(context){ const arr=context.dataset.data; let last=-1; for (let i=arr.length-1;i>=0;i--){ if (arr[i]!=null && arr[i]>0){ last=i; break; } } return context.dataIndex===last; } : false,
-                            align: 'top', anchor: 'end', backgroundColor: 'rgba(255,255,255,0.8)', borderWidth: 1,
-                        }
-                    };
-                    datasets.push(ds);
+                        datalabels: { display: false }
+                    });
                 });
+                
                 const avg = hours.map((h) => {
                     let sum=0, cnt=0;
                     for (const d of days) {
