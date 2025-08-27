@@ -329,17 +329,8 @@ app.post('/api/delivery/hourly', (req, res) => {
 });
 
 // 전체 데이터 다운로드(JSON)
-app.get('/api/delivery/export.json', (req, res) => {
-  try {
-    if (!deliveryDB) return res.status(500).json({ success: false, message: 'Delivery DB not initialized' });
-    const data = deliveryDB.getAll();
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="delivery-data.json"');
-    res.end(JSON.stringify({ delivery_data: data }, null, 2));
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
+// JSON 다운로드 비활성화 (요구사항: 제거)
+// app.get('/api/delivery/export.json', ...)
 
 // 전체 데이터 업로드(JSON 또는 CSV 파일)
 const uploadAny = multer({ storage: storage });
@@ -368,20 +359,8 @@ app.post('/api/delivery/import', uploadAny.single('file'), (req, res) => {
 });
 
 // 로컬 기본 CSV(일별 출고 수량 보고용 - 시트4.csv)에서 DB 재적재
-app.post('/api/delivery/import-default-csv', (req, res) => {
-  try {
-    if (!deliveryDB) return res.status(500).json({ success: false, message: 'Delivery DB not initialized' });
-    const csvPath = path.join(__dirname, '일별 출고 수량 보고용 - 시트4.csv');
-    if (!fs.existsSync(csvPath)) {
-      return res.status(404).json({ success: false, message: '기본 CSV 파일이 존재하지 않습니다.' });
-    }
-    const result = deliveryDB.importFromCsvFile(csvPath);
-    notifyClientsOfUpdate && notifyClientsOfUpdate();
-    res.json({ success: true, result });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
+// 기본 CSV 재적재 비활성화 (요구사항: 제거)
+// app.post('/api/delivery/import-default-csv', ...)
 
 // 출고 데이터 엑셀 다운로드
 app.get('/api/delivery/export.xlsx', (req, res) => {
@@ -445,6 +424,24 @@ app.post('/api/delivery/import-excel', uploadAny.single('file'), (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 });
+
+// 전일 출고 총합 조회 API
+app.get('/api/delivery/previous-total', (req, res) => {
+  try {
+    if (!deliveryDB) return res.status(500).json({ success: false, message: 'Delivery DB not initialized' });
+    const base = req.query.date ? new Date(String(req.query.date)) : new Date();
+    if (isNaN(base.getTime())) return res.status(400).json({ success: false, message: 'invalid date' });
+    const prev = new Date(base);
+    prev.setDate(prev.getDate() - 1);
+    const prevDate = DeliveryDatabase.toIsoDate(prev);
+    const row = deliveryDB.getByDate(prevDate);
+    const total = row && typeof row.total === 'number' ? row.total : 0;
+    res.json({ success: true, prevDate, total, row });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 
 // 생산계획 API 엔드포인트 - DB 기반으로 변경
 app.get('/api/production-log', async (req, res) => {

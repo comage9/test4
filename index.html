@@ -110,12 +110,17 @@
                             <div class="badge badge-error">어제</div>
                             <div class="badge badge-success">그저께</div>
                         </div>
-                        <div class="flex gap-2 ml-4">
-                            <button id="import-default-btn" class="btn btn-xs">기본 CSV 재적재</button>
-                            <button id="export-json-btn" class="btn btn-xs">다운로드 JSON</button>
-                            <button id="export-excel-btn" class="btn btn-xs">다운로드 Excel</button>
-                            <button id="upload-btn" class="btn btn-xs btn-primary">데이터 업로드</button>
-                            <input id="file-input" type="file" accept=".json,.csv,.txt,.xlsx,.xls" class="hidden" />
+                        <div class="flex gap-3 ml-4 items-center">
+                            <div class="flex gap-2 items-center">
+                                <input id="prev-date" type="date" class="input input-xs input-bordered" />
+                                <button id="prev-day-search-btn" class="btn btn-xs">전일 수량 조회</button>
+                                <span id="prev-day-result" class="text-xs opacity-70"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="export-excel-btn" class="btn btn-xs">다운로드 Excel</button>
+                                <button id="upload-btn" class="btn btn-xs btn-primary">데이터 업로드</button>
+                                <input id="file-input" type="file" accept=".json,.csv,.txt,.xlsx,.xls" class="hidden" />
+                            </div>
                         </div>
                     </div>
                 </div>

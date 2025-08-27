@@ -120,40 +120,38 @@ class Dashboard {
             });
         }
 
-        // 기본 CSV 재적재 버튼
-        const importBtn = document.getElementById('import-default-btn');
-        if (importBtn) {
-            importBtn.addEventListener('click', async () => {
+        // 전일 출고 수량 조회
+        const prevBtn = document.getElementById('prev-day-search-btn');
+        const prevDate = document.getElementById('prev-date');
+        const prevResult = document.getElementById('prev-day-result');
+        if (prevBtn && prevDate) {
+            // 기본값: 오늘 날짜로 설정
+            try {
+                const today = new Date();
+                prevDate.value = today.toISOString().slice(0, 10);
+            } catch {}
+            prevBtn.addEventListener('click', async () => {
+                const d = (prevDate.value || '').trim();
+                if (!d) { alert('날짜를 선택해 주세요'); return; }
+                prevBtn.disabled = true;
                 try {
-                    importBtn.disabled = true;
-                    importBtn.classList.add('loading');
-                    const res = await fetch(`${this.apiBase}/api/delivery/import-default-csv`, {
-                        method: 'POST'
-                    });
+                    const url = `${this.apiBase}/api/delivery/previous-total?date=${encodeURIComponent(d)}`;
+                    const res = await fetch(url);
                     const json = await res.json().catch(() => null);
                     if (res.ok && json && json.success) {
-                        alert(`기본 CSV 재적재 완료 (rows: ${json.result?.imported ?? 'unknown'})`);
-                        await this.refreshData();
+                        prevResult.textContent = `${json.prevDate} 전일 총합: ${json.total}`;
                     } else {
-                        alert(`재적재 실패: ${json?.message || res.status}`);
+                        prevResult.textContent = '조회 실패';
                     }
                 } catch (e) {
-                    alert(`재적재 오류: ${e.message}`);
+                    prevResult.textContent = '오류 발생';
                 } finally {
-                    importBtn.disabled = false;
-                    importBtn.classList.remove('loading');
+                    prevBtn.disabled = false;
                 }
             });
         }
 
         // 다운로드 버튼들
-        const exportJsonBtn = document.getElementById('export-json-btn');
-        if (exportJsonBtn) {
-            exportJsonBtn.addEventListener('click', () => {
-                const url = `${this.apiBase}/api/delivery/export.json`;
-                window.open(url, '_blank');
-            });
-        }
         const exportExcelBtn = document.getElementById('export-excel-btn');
         if (exportExcelBtn) {
             exportExcelBtn.addEventListener('click', () => {
