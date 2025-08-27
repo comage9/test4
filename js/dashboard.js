@@ -145,10 +145,15 @@ class Dashboard {
                     if (res.ok && json && json.success && Array.isArray(json.data)) {
                         this.rangeMode = true;
                         this.data = json.data; // 범위 데이터로 교체
-                        rangeResult.textContent = `${json.start} ~ ${json.end} (${json.count}일)`;
+                        if (json.count === 0) {
+                            rangeResult.textContent = `${json.start} ~ ${json.end}: 데이터 없음`;
+                        } else {
+                            rangeResult.textContent = `${json.start} ~ ${json.end} (${json.count}일)`;
+                        }
                         this.updateDashboard();
                     } else {
-                        rangeResult.textContent = '조회 실패';
+                        const msg = (json && (json.message || json.error)) ? (json.message || json.error) : res.status;
+                        rangeResult.textContent = `조회 실패: ${msg}`;
                     }
                 } catch (e) {
                     rangeResult.textContent = '오류 발생';
@@ -630,7 +635,7 @@ class Dashboard {
         }
 
         // 이전 3일 데이터로 평균 출고량 계산
-        const recentDays = this.data.slice(-4, -1); // 오늘 제외한 최근 3일
+        const recentDays = this.rangeMode ? this.data : this.data.slice(-4, -1); // 범위 모드면 전체, 아니면 최근 3일
         let dailyTotals = []; // 각 일별 총 출고량
         let hourlyIncrements = []; // 시간당 증가량
         
@@ -666,11 +671,11 @@ class Dashboard {
             }
         });
         
-        // 3일 평균 출고수량
+        // 평균 출고수량 (범위 모드: 선택기간 평균, 기본: 최근 3일 평균)
         const avgDaily = dailyTotals.length > 0 ? 
             Math.round(dailyTotals.reduce((a, b) => a + b, 0) / dailyTotals.length) : 0;
         
-        // 평균 시간당 출고량
+        // 평균 시간당 출고량 (범위 모드: 선택기간 평균)
         const avgHourly = hourlyIncrements.length > 0 ? 
             Math.round(hourlyIncrements.reduce((a, b) => a + b, 0) / hourlyIncrements.length) : 0;
 
@@ -731,6 +736,8 @@ class Dashboard {
         document.getElementById('yesterday-last').textContent = yesterdayLast.toLocaleString();
         document.getElementById('max-hourly').textContent = todayEstimated.toLocaleString();
         document.getElementById('avg-hourly').textContent = avgHourly.toLocaleString();
+        const avgDesc = document.getElementById('avg-hourly-desc');
+        if (avgDesc) avgDesc.textContent = this.rangeMode ? '선택 기간 평균' : '이전 3일 평균';
     }
 
 
