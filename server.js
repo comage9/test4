@@ -441,6 +441,7 @@ app.get('/api/delivery/range', (req, res) => {
     if (sIso > eIso) return res.status(400).json({ success: false, message: 'start must be <= end' });
     const all = deliveryDB.getAll();
     const data = all.filter(r => r.date >= sIso && r.date <= eIso);
+    try { console.log('[range] %s ~ %s -> %d days', sIso, eIso, data.length); } catch {}
     res.json({ success: true, start: sIso, end: eIso, count: data.length, data });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

@@ -137,8 +137,7 @@ class Dashboard {
                 const e = (endDate.value || '').trim();
                 if (!s || !e) { alert('시작일과 종료일을 선택해 주세요'); return; }
                 // API base 보정: this.apiBase가 비어있으면 동일 오리진 사용(HTTP/S에서만)
-                const base = this.apiBase || ((location && /^https?:/.test(location.protocol)) ? location.origin : '');
-                if (!base) { alert('API 서버를 찾지 못했습니다. 서버를 실행 후 브라우저에서 http로 접속하세요.'); return; }
+                const base = this.apiBase || ''; // base가 없으면 상대경로로 동일 오리진 호출
                 rangeBtn.disabled = true;
                 rangeResult.textContent = '';
                 try {
