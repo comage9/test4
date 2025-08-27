@@ -979,13 +979,18 @@ function startServer(port, retries = 10) {
 
         deliveryDB = new DeliveryDatabase();
         console.log('Delivery DB initialized');
-        // 초기 CSV에서 출고 데이터 시드(있을 경우)
+        // 초기 CSV에서 출고 데이터 시드(최초 비어있을 때만)
         try {
+          const count = (deliveryDB.getAll() || []).length;
           const csvPath = path.join(__dirname, '일별 출고 수량 보고용 - 시트4.csv');
-          const result = deliveryDB.importFromCsvFile(csvPath);
-          if (result.imported) console.log(`Delivery CSV imported: ${result.imported} rows`);
+          if (count === 0 && fs.existsSync(csvPath)) {
+            const result = deliveryDB.importFromCsvFile(csvPath);
+            if (result.imported) console.log(`Delivery CSV imported: ${result.imported} rows`);
+          } else {
+            console.log(`Skip delivery CSV import on start (existing rows: ${count})`);
+          }
         } catch (e) {
-          console.log('Delivery CSV import skipped:', e.message);
+          console.log('Delivery CSV import check failed:', e.message);
         }
       }
 
