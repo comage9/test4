@@ -34,7 +34,21 @@ let deliveryDB = null;
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), { etag: false, lastModified: true, maxAge: 0 }));
+// Disable cache for dynamic assets to avoid stale JS during updates
+app.use((req, res, next) => {
+  try {
+    const url = (req.url || '').split('?')[0];
+    if (url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+    }
+  } catch (e) {}
+  next();
+});
+
 
 // 간단한 파일 로깅 유틸 (패키징 환경에서 종료 원인 추적)
 const logFilePath = process.pkg ? path.join(path.dirname(process.execPath), 'server.log') : path.join(__dirname, 'server.log');
