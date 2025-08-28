@@ -878,7 +878,7 @@ class Dashboard {
               .concat(hours.map(h=>`<th class="text-right">${String(h).padStart(2,'0')}</th>`))
               .concat(['</tr></thead><tbody>']).join('');
             const rowT = ['<tr><td>금일 증감</td>']
-              .concat(hours.map((h)=> numCell(incBase[h], !!flags[h] and (incT[h]==None))))
+              .concat(hours.map((h)=> numCell(incBase[h], !!(flags[h] && (incT[h]==null || incT[h]===undefined)))))
               .concat(['</tr>']).join('');
             const rowY = ['<tr><td>전일 대비 편차</td>']
               .concat(hours.map((h)=> devCell(incBase[h], incY[h], false)))
