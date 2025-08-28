@@ -1032,19 +1032,21 @@ function startServer(port, retries = 10) {
     });
 
     server.on('error', (err) => {
-      if (err && err.code === 'EADDRINUSE' && retries > 0) {
-        console.warn(`Port ${port} in use. Retrying on ${port + 1}... (${retries - 1} left)`);
-        setTimeout(() => startServer(port + 1, retries - 1), 400);
+      const code = (err && err.code) || 'UNKNOWN';
+      console.error('Server failed to start:', code, err && (err.message || err));
+      logToFile('Server failed to start', { code, message: err && (err.stack || err.message) });
+      if (retries > 0) {
+        const nextPort = port + 1;
+        console.warn(`Retrying on ${nextPort}... (${retries - 1} left)`);
+        setTimeout(() => startServer(nextPort, retries - 1), 600);
       } else {
-        console.error('Server failed to start:', err);
-        logToFile('Server failed to start', err && (err.stack || err.message));
-        // 즉시 종료하지 않고 에러 메시지 확인 가능하도록 대기
-        setTimeout(() => process.exit(1), 2000);
+        console.warn('No retries left. Keeping process alive for inspection.');
       }
     });
   } catch (e) {
     console.error('Unexpected error while starting server:', e);
-    setTimeout(() => process.exit(1), 2000);
+    logToFile('Unexpected error while starting server', e && (e.stack || e.message));
+    // keep process alive for diagnosis; will rely on keep-alive interval
   }
 }
 
