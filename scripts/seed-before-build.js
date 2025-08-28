@@ -15,8 +15,14 @@ function seedProductionDB() {
     log(`Skip removing production.db: ${e.message}`);
   }
 
-  const ProductionDatabase = require('../database');
-  const XLSX = require('xlsx');
+  let ProductionDatabase, XLSX;
+  try {
+    ProductionDatabase = require('../database');
+    XLSX = require('xlsx');
+  } catch (e) {
+    log(`Skip production DB seed (native module not available): ${e.message}`);
+    return; // in CI/WSL cross-build environments, better-sqlite3 may not be loadable
+  }
   const excelPath = path.join(__dirname, '..', 'examples', '생산일지-full.xlsx');
 
   const db = new ProductionDatabase();
