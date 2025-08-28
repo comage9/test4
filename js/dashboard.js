@@ -171,6 +171,13 @@ class Dashboard {
         }
 
 
+        // 통계 토글
+        const toggleAux = document.getElementById('toggle-aux-stats');
+        const auxBody = document.getElementById('aux-stats-body');
+        if (toggleAux && auxBody) {
+            toggleAux.addEventListener('click', ()=> { auxBody.classList.toggle('hidden'); });
+        }
+
         // 다운로드 버튼들
         const exportExcelBtn = document.getElementById('export-excel-btn');
         if (exportExcelBtn) {
@@ -847,10 +854,10 @@ class Dashboard {
             const flags = (this.predictedFlags && Array.isArray(this.predictedFlags)) ? this.predictedFlags : [];
             const series = (this.predictedSeries && Array.isArray(this.predictedSeries)) ? this.predictedSeries : [];
             const incPred = hours.map(h=>{
-                if (!flags[h]) return null;
-                if (h===0) return null;
+                if (!flags[h] || h===0) return null;
                 const a = parseInt(series[h])||0; const b = parseInt(series[h-1])||0; return (a>0 && b>0 && a>=b) ? (a-b) : null;
             });
+            const incBase = hours.map(h=> (incT[h]!==null && incT[h]!==undefined) ? incT[h] : incPred[h]);
             // cells
             const devCell = (base, comp, orange)=>{
                 if (base==null || comp==null) return '<td class="text-right opacity-60">-</td>';
@@ -871,22 +878,22 @@ class Dashboard {
               .concat(hours.map(h=>`<th class="text-right">${String(h).padStart(2,'0')}</th>`))
               .concat(['</tr></thead><tbody>']).join('');
             const rowT = ['<tr><td>금일 증감</td>']
-              .concat(hours.map((h)=> numCell(incT[h], !!flags[h])))
+              .concat(hours.map((h)=> numCell(incBase[h], !!flags[h] and (incT[h]==None))))
               .concat(['</tr>']).join('');
             const rowY = ['<tr><td>전일 대비 편차</td>']
-              .concat(hours.map((h)=> devCell(incT[h], incY[h], false)))
+              .concat(hours.map((h)=> devCell(incBase[h], incY[h], false)))
               .concat(['</tr>']).join('');
             const rowW = ['<tr><td>최근7일 평균 대비 편차</td>']
-              .concat(hours.map((h)=> devCell(incT[h], avg[h], false)))
+              .concat(hours.map((h)=> devCell(incBase[h], avg[h], false)))
               .concat(['</tr>']).join('');
-            const rowTP = ['<tr><td>금일 예측 증감</td>']
+            /* const rowTP = ['<tr><td>금일 예측 증감</td>']
               .concat(hours.map((h)=> numCell(incPred[h], true)))
               .concat(['</tr>']).join('');
-            const rowPD = ['<tr><td>예측 대비(7일) 편차</td>']
+            const /* rowPD = ['<tr><td>예측 대비(7일) 편차</td>']
               .concat(hours.map((h)=> devCell(avg[h], incPred[h], true)))
               .concat(['</tr>']).join('');
             const tail='</tbody></table>';
-            if (diffEl) diffEl.innerHTML = head + rowT + rowY + rowW + rowTP + rowPD + tail;
+            if (diffEl) diffEl.innerHTML = head + rowT + rowY + rowW + tail;
             if (weekEl) { try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {} }
         } catch (e) {
             console.warn('renderAuxStats failed:', e);

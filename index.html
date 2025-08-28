@@ -133,6 +133,11 @@
 
                 <!-- 보조 통계 패널: 전일 vs 금일 증감, 최근 7일 시간별 평균 -->
                 <div id="aux-stats" class="mt-6 grid grid-cols-1 gap-4">
+                    <div class="flex justify-end mb-2">
+                        <button id="toggle-aux-stats" class="btn btn-xs">증감/편차 보기</button>
+                    </div>
+                    <div id="aux-stats-body" class="hidden">
+
                     <div class="card bg-base-100 shadow">
                         <div class="card-body">
                             <h3 class="card-title text-sm">금일/전일/최근7일 시간별 증감</h3>
@@ -146,6 +151,8 @@
                         </div>
                     </div>
                 </div>
+                    </div>
+
                 <div class="mt-4 text-sm text-base-content/70">
                     <p>• 0시부터 23시까지 시간별 누적 출고량을 나타냅니다 (23시가 하루 최종값)</p>
                     <p>• 오늘 데이터는 실선, 어제는 점선, 그저께는 긴 점선으로 표시됩니다</p>
