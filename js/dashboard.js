@@ -886,12 +886,6 @@ class Dashboard {
             const rowW = ['<tr><td>최근7일 평균 대비 편차</td>']
               .concat(hours.map((h)=> devCell(incBase[h], avg[h], false)))
               .concat(['</tr>']).join('');
-            /* const rowTP = ['<tr><td>금일 예측 증감</td>']
-              .concat(hours.map((h)=> numCell(incPred[h], true)))
-              .concat(['</tr>']).join('');
-            const /* rowPD = ['<tr><td>예측 대비(7일) 편차</td>']
-              .concat(hours.map((h)=> devCell(avg[h], incPred[h], true)))
-              .concat(['</tr>']).join('');
             const tail='</tbody></table>';
             if (diffEl) diffEl.innerHTML = head + rowT + rowY + rowW + tail;
             if (weekEl) { try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {} }
