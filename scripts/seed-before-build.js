@@ -85,8 +85,8 @@ function seedDeliveryJSON() {
 
 (function main() {
   log('Seeding databases before build...');
-  seedProductionDB();
-  seedDeliveryJSON();
+  try { seedProductionDB(); } catch (e) { log(`Production seed skipped due to error: ${e.message}`); }
+  try { seedDeliveryJSON(); } catch (e) { log(`Delivery seed skipped due to error: ${e.message}`); }
   log('Seeding complete.');
 })();
 
