@@ -588,6 +588,7 @@ class Dashboard {
         this.updateChart();
         this.updateLastUpdate();
         this.renderDataEntryForm(); // 데이터 입력 폼 렌더링 추가
+        this.renderAuxStats(); // 보조 표 렌더링 (전일vs금일, 7일 평균)
     }
 
     updateStats() {

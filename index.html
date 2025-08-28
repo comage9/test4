@@ -130,6 +130,22 @@
                 <div class="w-full h-[700px]">
                     <canvas id="hourly-chart"></canvas>
                 </div>
+
+                <!-- 보조 통계 패널: 전일 vs 금일 증감, 최근 7일 시간별 평균 -->
+                <div id="aux-stats" class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="card bg-base-100 shadow">
+                        <div class="card-body">
+                            <h3 class="card-title text-sm">전일 vs 금일 시간별 증감</h3>
+                            <div id="table-diff-day" class="overflow-x-auto text-sm"></div>
+                        </div>
+                    </div>
+                    <div class="card bg-base-100 shadow">
+                        <div class="card-body">
+                            <h3 class="card-title text-sm">최근 7일 시간별 평균(누적)</h3>
+                            <div id="table-weekly-hourly" class="overflow-x-auto text-sm"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="mt-4 text-sm text-base-content/70">
                     <p>• 0시부터 23시까지 시간별 누적 출고량을 나타냅니다 (23시가 하루 최종값)</p>
                     <p>• 오늘 데이터는 실선, 어제는 점선, 그저께는 긴 점선으로 표시됩니다</p>
