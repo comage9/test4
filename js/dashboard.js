@@ -843,23 +843,46 @@ class Dashboard {
                 return `<td class="text-right ${cls}">${sym} ${txt}</td>`;
             };
 
-            // 전일 vs 금일 시간별 증감 (2행)
+            // 통합 테이블: 금일 증감, 전일 증감, 최근7일 평균 증감 (각 1행)
             if (diffEl) {
                 const incY = hours.map(h=> getInc(yesterday, h));
                 const incT = hours.map(h=> getInc(today, h));
                 const flags = (this.predictedFlags && Array.isArray(this.predictedFlags)) ? this.predictedFlags : [];
+                // 최근7일 평균 증감 계산 (오늘 제외)
+                const days = this.data.slice(0, -1);
+                const last7 = days.slice(-7);
+                const key = (x)=> 'hour_'+String(x).padStart(2,'0');
+                let avg = hours.map(_=>0);
+                if (last7.length>0) {
+                    const incList = last7.map(r=> hours.map(h=>{
+                        if (h===0) return 0; const a=parseInt(r[key(h)])||0; const b=parseInt(r[key(h-1)])||0; return (a>0 && b>0 && a>=b) ? (a-b) : 0;
+                    }));
+                    avg = hours.map(h=>{
+                        let sum=0; incList.forEach(arr=>{ sum+= (arr[h]||0); });
+                        return Math.round(sum / incList.length);
+                    });
+                }
                 const head = ['<table class="table table-compact"><thead><tr><th>구분</th>']
                     .concat(hours.map(h=>`<th class="text-right">${String(h).padStart(2,'0')}</th>`))
                     .concat(['</tr></thead><tbody>']).join('');
-                const rowY = ['<tr><td>전일 증감</td>']
-                    .concat(incY.map((v,idx)=> arrowCell(v,false)))
-                    .concat(['</tr>']).join('');
                 const rowT = ['<tr><td>금일 증감</td>']
                     .concat(incT.map((v,idx)=> arrowCell(v, !!flags[idx])))
                     .concat(['</tr>']).join('');
+                const rowY = ['<tr><td>전일 증감</td>']
+                    .concat(incY.map((v,idx)=> arrowCell(v,false)))
+                    .concat(['</tr>']).join('');
+                const rowW = ['<tr><td>최근7일 평균 증감</td>']
+                    .concat(avg.map(v=> arrowCell(v,false)))
+                    .concat(['</tr>']).join('');
                 const tail='</tbody></table>';
-                diffEl.innerHTML = head + rowY + rowT + tail;
+                diffEl.innerHTML = head + rowT + rowY + rowW + tail;
             }
+            // 두번째 카드(주간 패널)는 숨김 처리
+            if (weekEl) {
+                try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {}
+                weekEl.innerHTML='';
+            }
+            
 
             // 최근 7일 시간별 평균 증감 (오늘 제외)
             if (weekEl) {
