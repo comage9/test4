@@ -810,103 +810,84 @@ class Dashboard {
             const diffEl = document.getElementById('table-diff-day');
             const weekEl = document.getElementById('table-weekly-hourly');
             if (!diffEl && !weekEl) return;
-            // 기간 조회 중에는 안내만
             if (this.rangeMode) {
-                if (diffEl) diffEl.innerHTML = '<div class="text-xs opacity-60">기간 조회 중: 전일/금일 비교는 기본 모드에서 표시됩니다.</div>';
-                if (weekEl) weekEl.innerHTML = '<div class="text-xs opacity-60">기간 조회 중: 최근 7일 평균은 기본 모드에서 표시됩니다.</div>';
+                if (diffEl) diffEl.innerHTML = '<div class="text-xs opacity-60">기간 조회 중: 통합 표는 기본 모드에서 표시됩니다.</div>';
+                if (weekEl) { try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {} }
                 return;
             }
             if (!this.data || this.data.length === 0) {
                 if (diffEl) diffEl.innerHTML = '<div class="text-xs opacity-60">데이터 없음</div>';
-                if (weekEl) weekEl.innerHTML = '<div class="text-xs opacity-60">데이터 없음</div>';
+                if (weekEl) { try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {} }
                 return;
             }
             const hours = Array.from({length:24}, (_,i)=> i);
+            const key = (x)=> 'hour_'+String(x).padStart(2,'0');
             const today = this.data[this.data.length-1] || null;
             const yesterday = this.data.length>1 ? this.data[this.data.length-2] : null;
-
             const getInc = (row, h) => {
                 if (!row || h===0) return null;
-                const key = (x)=> 'hour_'+String(x).padStart(2,'0');
                 const a = parseInt(row[key(h)])||0;
                 const b = parseInt(row[key(h-1)])||0;
                 if (a>0 && b>0 && a>=b) return a-b;
-                if (a===0 && b===0) return 0; // 둘 다 없으면 0으로 처리
+                if (a===0 && b===0) return 0;
                 return null;
             };
-            const arrowCell = (n, predicted) => {
-                if (n===null || n===undefined) return '<td class="text-right opacity-60">-</td>';
-                let cls='text-gray-500'; let sym='•'; let txt = String(n);
-                if (n>0) { cls='text-green-600'; sym='▲'; txt = '+'+n; }
-                else if (n<0) { cls='text-red-600'; sym='▼'; }
-                if (predicted) cls = 'text-orange-500';
+            // base today increments
+            const incT = hours.map(h=> getInc(today,h));
+            // yesterday increments
+            const incY = hours.map(h=> getInc(yesterday,h));
+            // weekly avg increments (today 제외 최근7일)
+            const days = this.data.slice(0,-1).slice(-7);
+            const avg = hours.map(h=>{
+                if (h===0 || days.length===0) return 0;
+                let sum=0, cnt=0; days.forEach(r=>{ const a=parseInt(r[key(h)])||0; const b=parseInt(r[key(h-1)])||0; if (a>0 && b>0 && a>=b){ sum+= (a-b); cnt++; }});
+                return cnt? Math.round(sum/cnt) : 0;
+            });
+            // predicted increments for today
+            const flags = (this.predictedFlags && Array.isArray(this.predictedFlags)) ? this.predictedFlags : [];
+            const series = (this.predictedSeries && Array.isArray(this.predictedSeries)) ? this.predictedSeries : [];
+            const incPred = hours.map(h=>{
+                if (!flags[h]) return null;
+                if (h===0) return null;
+                const a = parseInt(series[h])||0; const b = parseInt(series[h-1])||0; return (a>0 && b>0 && a>=b) ? (a-b) : null;
+            });
+            // cells
+            const devCell = (base, comp, orange)=>{
+                if (base==null || comp==null) return '<td class="text-right opacity-60">-</td>';
+                const d = comp - base;
+                let cls='text-gray-500'; let sym='•'; let txt=String(d);
+                if (d>0) { cls='text-red-600'; sym='▲'; txt='+'+d; }
+                else if (d<0) { cls='text-green-600'; sym='▼'; }
+                if (orange) cls='text-orange-500';
                 return `<td class="text-right ${cls}">${sym} ${txt}</td>`;
             };
-
-            // 통합 테이블: 금일 증감, 전일 증감, 최근7일 평균 증감 (각 1행)
-            if (diffEl) {
-                const incY = hours.map(h=> getInc(yesterday, h));
-                const incT = hours.map(h=> getInc(today, h));
-                const flags = (this.predictedFlags && Array.isArray(this.predictedFlags)) ? this.predictedFlags : [];
-                // 최근7일 평균 증감 계산 (오늘 제외)
-                const days = this.data.slice(0, -1);
-                const last7 = days.slice(-7);
-                const key = (x)=> 'hour_'+String(x).padStart(2,'0');
-                let avg = hours.map(_=>0);
-                if (last7.length>0) {
-                    const incList = last7.map(r=> hours.map(h=>{
-                        if (h===0) return 0; const a=parseInt(r[key(h)])||0; const b=parseInt(r[key(h-1)])||0; return (a>0 && b>0 && a>=b) ? (a-b) : 0;
-                    }));
-                    avg = hours.map(h=>{
-                        let sum=0; incList.forEach(arr=>{ sum+= (arr[h]||0); });
-                        return Math.round(sum / incList.length);
-                    });
-                }
-                const head = ['<table class="table table-compact"><thead><tr><th>구분</th>']
-                    .concat(hours.map(h=>`<th class="text-right">${String(h).padStart(2,'0')}</th>`))
-                    .concat(['</tr></thead><tbody>']).join('');
-                const rowT = ['<tr><td>금일 증감</td>']
-                    .concat(incT.map((v,idx)=> arrowCell(v, !!flags[idx])))
-                    .concat(['</tr>']).join('');
-                const rowY = ['<tr><td>전일 증감</td>']
-                    .concat(incY.map((v,idx)=> arrowCell(v,false)))
-                    .concat(['</tr>']).join('');
-                const rowW = ['<tr><td>최근7일 평균 증감</td>']
-                    .concat(avg.map(v=> arrowCell(v,false)))
-                    .concat(['</tr>']).join('');
-                const tail='</tbody></table>';
-                diffEl.innerHTML = head + rowT + rowY + rowW + tail;
-            }
-            // 두번째 카드(주간 패널)는 숨김 처리
-            if (weekEl) {
-                try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {}
-                weekEl.innerHTML='';
-            }
-            
-
-            // 최근 7일 시간별 평균 증감 (오늘 제외)
-            if (weekEl) {
-                const days = this.data.slice(0, -1); // 오늘 제외
-                const last7 = days.slice(-7);
-                if (last7.length===0) {
-                    weekEl.innerHTML = '<div class="text-xs opacity-60">최근 7일 데이터가 없습니다.</div>';
-                } else {
-                    const key = (x)=> 'hour_'+String(x).padStart(2,'0');
-                    const incList = last7.map(r=> hours.map(h=>{
-                        if (h===0) return 0; const a=parseInt(r[key(h)])||0; const b=parseInt(r[key(h-1)])||0; return (a>0 && b>0 && a>=b) ? (a-b) : 0;
-                    }));
-                    const avg = hours.map(h=>{
-                        let sum=0; incList.forEach(arr=>{ sum+= (arr[h]||0); });
-                        return Math.round(sum / incList.length);
-                    });
-                    const html = ['<table class="table table-compact"><thead><tr><th>구분</th>']
-                      .concat(hours.map(h=>`<th class="text-right">${String(h).padStart(2,'0')}</th>`))
-                      .concat(['</tr></thead><tbody><tr><td>평균 증감</td>'])
-                      .concat(avg.map(v=>`<td class="text-right">${v?v:'-'}</td>`))
-                      .concat(['</tr></tbody></table>']).join('');
-                    weekEl.innerHTML = html;
-                }
-            }
+            const numCell = (n, orange)=>{
+                if (n==null) return '<td class="text-right opacity-60">-</td>';
+                const cls = orange? 'text-orange-500' : '';
+                return `<td class="text-right ${cls}">${n}</td>`;
+            };
+            // build table: rows -> 금일 증감, 전일 편차(전일-금일), 최근7일 편차(7일-금일), 금일 예측 증감, 예측 편차(예측-7일)
+            const head = ['<table class="table table-compact"><thead><tr><th>구분</th>']
+              .concat(hours.map(h=>`<th class="text-right">${String(h).padStart(2,'0')}</th>`))
+              .concat(['</tr></thead><tbody>']).join('');
+            const rowT = ['<tr><td>금일 증감</td>']
+              .concat(hours.map((h)=> numCell(incT[h], !!flags[h])))
+              .concat(['</tr>']).join('');
+            const rowY = ['<tr><td>전일 대비 편차</td>']
+              .concat(hours.map((h)=> devCell(incT[h], incY[h], false)))
+              .concat(['</tr>']).join('');
+            const rowW = ['<tr><td>최근7일 평균 대비 편차</td>']
+              .concat(hours.map((h)=> devCell(incT[h], avg[h], false)))
+              .concat(['</tr>']).join('');
+            const rowTP = ['<tr><td>금일 예측 증감</td>']
+              .concat(hours.map((h)=> numCell(incPred[h], true)))
+              .concat(['</tr>']).join('');
+            const rowPD = ['<tr><td>예측 대비(7일) 편차</td>']
+              .concat(hours.map((h)=> devCell(avg[h], incPred[h], true)))
+              .concat(['</tr>']).join('');
+            const tail='</tbody></table>';
+            if (diffEl) diffEl.innerHTML = head + rowT + rowY + rowW + rowTP + rowPD + tail;
+            if (weekEl) { try { if (weekEl.closest) weekEl.closest('.card').style.display='none'; else weekEl.parentElement.parentElement.style.display='none'; } catch {} }
         } catch (e) {
             console.warn('renderAuxStats failed:', e);
         }
@@ -1436,6 +1417,7 @@ class Dashboard {
             this.chart.data.labels = hours.map(h => h + ':00');
             this.chart.data.datasets[0].data = todayValuesWithPrediction;
             this.predictedFlags = todayPredictionResult.isPredicted;
+            this.predictedSeries = todayValuesWithPrediction;
             this.chart.data.datasets[1].data = yesterdayValues;
             this.chart.data.datasets[2].data = dayBeforeYesterdayValues;
             this.chart.data.datasets[3].data = todayIncrements; // 막대그래프 데이터
