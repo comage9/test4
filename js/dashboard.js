@@ -804,6 +804,67 @@ class Dashboard {
         }
     }
 
+    // 전일 vs 금일 시간별 증감, 최근 7일 시간별 평균(누적) 렌더링
+    renderAuxStats() {
+        try {
+            const diffEl = document.getElementById('table-diff-day');
+            const weekEl = document.getElementById('table-weekly-hourly');
+            if (!diffEl && !weekEl) return;
+            if (this.rangeMode) {
+                if (diffEl) diffEl.innerHTML = '<div class=\"text-xs opacity-60\">기간 조회 중: 전일/금일 비교는 기본 모드에서 표시됩니다.</div>';
+                if (weekEl) weekEl.innerHTML = '<div class=\"text-xs opacity-60\">기간 조회 중: 최근 7일 평균은 기본 모드에서 표시됩니다.</div>';
+                return;
+            }
+            if (!this.data || this.data.length === 0) {
+                if (diffEl) diffEl.innerHTML = '<div class=\"text-xs opacity-60\">데이터 없음</div>';
+                if (weekEl) weekEl.innerHTML = '<div class=\"text-xs opacity-60\">데이터 없음</div>';
+                return;
+            }
+            const hours = Array.from({length:24}, (_,i)=> i);
+            const today = this.data[this.data.length-1] || null;
+            const yesterday = this.data.length>1 ? this.data[this.data.length-2] : null;
+            if (diffEl) {
+                if (!today || !yesterday) {
+                    diffEl.innerHTML = '<div class=\"text-xs opacity-60\">비교할 데이터가 부족합니다.</div>';
+                } else {
+                    const rows = hours.map(h=>{
+                        const key = 'hour_'+String(h).padStart(2,'0');
+                        const ty = parseInt(today[key])||0;
+                        const yv = parseInt(yesterday[key])||0;
+                        const delta = (ty>0 && yv>0) ? (ty - yv) : (ty>0 ? ty : (yv>0 ? -yv : 0));
+                        return { h, yv: yv||'-', ty: ty||'-', d: delta };
+                    });
+                    const html = ['<table class=\"table table-compact\"><thead><tr><th>시간</th><th class=\"text-right\">전일</th><th class=\"text-right\">금일</th><th class=\"text-right\">증감</th></tr></thead><tbody>']
+                      .concat(rows.map(r=>`<tr><td>${String(r.h).padStart(2,'0')}</td><td class=\"text-right\">${r.yv}</td><td class=\"text-right\">${r.ty}</td><td class=\"text-right\">${r.d>0?('+'+r.d):r.d}</td></tr>`))
+                      .concat(['</tbody></table>']).join('');
+                    diffEl.innerHTML = html;
+                }
+            }
+            if (weekEl) {
+                const days = this.data.slice(0, -1);
+                const last7 = days.slice(-7);
+                if (last7.length===0) {
+                    weekEl.innerHTML = '<div class=\"text-xs opacity-60\">최근 7일 데이터가 없습니다.</div>';
+                } else {
+                    const avg = hours.map(h=>{
+                        const key='hour_'+String(h).padStart(2,'0');
+                        let sum=0,cnt=0; last7.forEach(d=>{ const v=parseInt(d[key])||0; if (v>0) { sum+=v; cnt++; }});
+                        return cnt? Math.round(sum/cnt) : 0;
+                    });
+                    const html = ['<table class=\"table table-compact\"><thead><tr><th>시간</th>']
+                      .concat(hours.map(h=>`<th class=\"text-right\">${String(h).padStart(2,'0')}</th>`))
+                      .concat(['</tr></thead><tbody><tr><td>평균</td>'])
+                      .concat(avg.map(v=>`<td class=\"text-right\">${v?v: '-'}</td>`))
+                      .concat(['</tr></tbody></table>']).join('');
+                    weekEl.innerHTML = html;
+                }
+            }
+        } catch (e) {
+            console.warn('renderAuxStats failed:', e);
+        }
+    }
+
+
     initChart() {
         try {
             console.log('Initializing chart...');
