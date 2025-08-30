@@ -17,10 +17,10 @@ COPY . .
 
 # Environment
 ENV NODE_ENV=production \
-    PORT=5174
+    PORT=5173
 
 # Expose server port
-EXPOSE 5174
+EXPOSE 5173
 
 # Default DB path can be overridden via env DELIVERY_DB_PATH
 CMD ["node", "server.js"]

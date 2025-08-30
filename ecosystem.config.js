@@ -7,7 +7,7 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: 5174,
+        PORT: 5173,
         // Optional: override to a fixed path
         // DELIVERY_DB_PATH: '/var/lib/delivery-dashboard/production.db'
       }
