@@ -48,9 +48,10 @@
                         <label class="label"><span class="label-text">분류 선택(다중)</span></label>
                         <select id="category-select" multiple class="select select-bordered min-h-[3rem]"></select>
                     </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">검색(일자/분류)</span></label>
-                        <input id="search-input" type="text" placeholder="예: 2025-08 또는 'A카테고리'" class="input input-bordered" />
+                    <div class="form-control relative">
+                        <label class="label"><span class="label-text">검색(일자/분류/품목)</span></label>
+                        <input id="search-input" type="text" placeholder="예: 2025-08, 'A카테고리', 또는 품목 일부" class="input input-bordered" autocomplete="off" />
+                        <div id="search-suggest" class="absolute left-0 right-0 top-full mt-1 bg-base-100 border rounded shadow z-40 hidden max-h-64 overflow-auto"></div>
                     </div>
                 </div>
             </div>

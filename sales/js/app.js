@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchInput = document.getElementById('search-input');
     const summaryDownloadBtn = document.getElementById('summary-download');
     const detailDownloadBtn = document.getElementById('detail-download');
+    const suggestBox = document.getElementById('search-suggest');
 
     // API 상태 표시 및 컨트롤 활성/비활성
     function updateApiUiState() {
@@ -164,9 +165,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderCharts() {
-        const cat = dataManager.getCategoryBoxAndAmount();
+        const cat = dataManager.getCategoryBoxAndAmountFiltered(currentCategories);
         catChart.renderCategoryBoxAndAmount(cat);
-        const trend = dataManager.getTrendBoxAndAmount();
+        const trend = dataManager.getTrendBoxAndAmountFiltered(currentCategories);
         trendChart.renderTrendBoxAndAmount(trend);
     }
 
@@ -260,9 +261,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderSummary();
     });
 
-    // 검색
+    // 검색 + 제안
+    function hideSuggest() { if (suggestBox) suggestBox.classList.add('hidden'); }
+    function showSuggest(items) {
+        if (!suggestBox) return;
+        if (!items || items.length === 0) { hideSuggest(); return; }
+        suggestBox.innerHTML = items.map(it => `<div class="px-3 py-2 hover:bg-base-200 cursor-pointer" data-item="${it.replaceAll('"','&quot;')}">${it}</div>`).join('');
+        suggestBox.classList.remove('hidden');
+    }
+    document.addEventListener('click', (e) => {
+        if (!suggestBox) return;
+        if (!e.target.closest('#search-suggest') && !e.target.closest('#search-input')) hideSuggest();
+    });
+    suggestBox?.addEventListener('click', async (e) => {
+        const el = e.target.closest('[data-item]');
+        if (!el) return;
+        const name = el.getAttribute('data-item');
+        hideSuggest();
+        // 최신 출현 찾아 상세로 이동
+        const s = startInput.value, ed = endInput.value;
+        const occ = dataManager.findMostRecentItemOccurrence(name, s, ed);
+        if (occ) {
+            await showDetails(occ.date, occ.category);
+            // 하이라이트
+            const rows = detailTbody?.querySelectorAll('tr');
+            rows?.forEach(r => { if (r.textContent.includes(name)) r.classList.add('bg-warning/30'); });
+            detailTitle?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert('선택한 품목의 데이터가 현재 구간에서 없습니다.');
+        }
+    });
     searchInput?.addEventListener('input', () => {
+        const term = (searchInput.value || '').trim().toLowerCase();
+        // 요약 필터에는 일자/분류 반영
         renderSummary();
+        // 품목 제안(2글자 이상)
+        if (term.length >= 2) {
+            const items = dataManager.getUniqueItems().filter(n => n.toLowerCase().includes(term)).slice(0, 10);
+            showSuggest(items);
+        } else {
+            hideSuggest();
+        }
     });
 
     // 요약 정렬(합계 헤더 클릭)

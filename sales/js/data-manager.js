@@ -74,12 +74,22 @@ class DataManager {
     }
 
     // 카테고리별 박스/금액 동시 반환
-    getCategoryBoxAndAmount() {
-        const labels = this.summary.map(s => s.category);
-        const boxValues = this.summary.map(s => s.box_qty || 0);
-        const amountValues = this.summary.map(s => s.amount || 0);
-        return { labels, boxValues, amountValues };
-    }
+  getCategoryBoxAndAmount() {
+    const labels = this.summary.map(s => s.category);
+    const boxValues = this.summary.map(s => s.box_qty || 0);
+    const amountValues = this.summary.map(s => s.amount || 0);
+    return { labels, boxValues, amountValues };
+  }
+
+  // 카테고리 필터 반영한 박스/금액 합계
+  getCategoryBoxAndAmountFiltered(selectedCats) {
+    if (!selectedCats || selectedCats.size === 0) return this.getCategoryBoxAndAmount();
+    const filtered = this.summary.filter(s => selectedCats.has(s.category));
+    const labels = filtered.map(s => s.category);
+    const boxValues = filtered.map(s => s.box_qty || 0);
+    const amountValues = filtered.map(s => s.amount || 0);
+    return { labels, boxValues, amountValues };
+  }
 
     // 일별 추이 (metric)
     getTrend(metric = 'box') {
@@ -90,12 +100,53 @@ class DataManager {
     }
 
     // 일별 박스/금액 동시 반환
-    getTrendBoxAndAmount() {
-        const labels = this.daily.map(d => d.date);
-        const boxValues = this.daily.map(d => d.box_qty || 0);
-        const amountValues = this.daily.map(d => d.amount || 0);
-        return { labels, boxValues, amountValues };
+  getTrendBoxAndAmount() {
+    const labels = this.daily.map(d => d.date);
+    const boxValues = this.daily.map(d => d.box_qty || 0);
+    const amountValues = this.daily.map(d => d.amount || 0);
+    return { labels, boxValues, amountValues };
+  }
+
+  // 카테고리 필터 반영 일별 박스/금액 (raw 필요)
+  getTrendBoxAndAmountFiltered(selectedCats) {
+    if (!selectedCats || selectedCats.size === 0) return this.getTrendBoxAndAmount();
+    // raw를 날짜별로 집계
+    const map = new Map(); // date -> {box, amount}
+    for (const r of this.raw) {
+      if (!selectedCats.has(r.category)) continue;
+      const o = map.get(r.date) || { box: 0, amount: 0 };
+      o.box += r.box_qty || 0;
+      o.amount += r.amount || 0;
+      map.set(r.date, o);
     }
+    const labels = Array.from(map.keys()).sort((a,b)=> a.localeCompare(b));
+    const boxValues = labels.map(d => (map.get(d)?.box) || 0);
+    const amountValues = labels.map(d => (map.get(d)?.amount) || 0);
+    return { labels, boxValues, amountValues };
+  }
+
+  // 아이템 목록 (중복 제거)
+  getUniqueItems() {
+    const set = new Set();
+    for (const r of this.raw) { if (r.item) set.add(r.item); }
+    return Array.from(set);
+  }
+
+  // 특정 품목의 최신 출현 (구간 내)
+  findMostRecentItemOccurrence(name, startIso, endIso) {
+    let found = null;
+    for (const r of this.raw) {
+      if (!r.item) continue;
+      if (startIso && r.date < startIso) continue;
+      if (endIso && r.date > endIso) continue;
+      if (r.item.toLowerCase().includes(String(name || '').toLowerCase())) {
+        if (!found || r.date > found.date) {
+          found = { date: r.date, category: r.category || '-' };
+        }
+      }
+    }
+    return found;
+  }
 
     // 일자+분류 요약: 박스 수량 합계
     getDailyCategorySummary() {
