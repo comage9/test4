@@ -11,6 +11,9 @@ const { URL } = require('url');
 const ProductionDatabase = require('./database-json');
 const DeliveryDatabase = require('./delivery-database');
 
+// Log __dirname at the very beginning
+console.log('__dirname:', __dirname);
+
 process.on('uncaughtException', (err, origin) => {
   console.error(`Caught exception: ${err}\nException origin: ${origin}`);
 });
@@ -32,7 +35,11 @@ let productionDB = null;
 let deliveryDB = null;
 
 app.use(cors());
+
 app.use(bodyParser.json({ limit: '50mb' }));
+
+app.use(express.static(path.join(__dirname), { etag: false, lastModified: true, maxAge: 0 }));
+
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname), { etag: false, lastModified: true, maxAge: 0 }));
 // Disable cache for dynamic assets to avoid stale JS during updates

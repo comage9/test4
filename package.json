@@ -1,133 +1,71 @@
 {
-
   "name": "delivery-dashboard",
-
   "version": "1.0.0",
-
   "description": "Chart MCP(Model Context Protocol)를 활용한 차세대 대시보드 플랫폼입니다. 기존 출고 현황 대시보드의 구조적 문제를 해결하고, 실시간 데이터 스트리밍, 사용자 커스터마이징, 확장 가능한 차트 시스템을 제공합니다.",
-
   "main": "server.js",
-
   "bin": "server.js",
-
   "pkg": {
-
     "assets": [
-
       "credentials.json",
-
       "index.html",
-
       "production-log.html",
-
       "redirect.html",
-
       "css/**/*",
-
       "js/**/*",
-
       "sales/**/*",
-
       "examples/**/*",
-
       "production-data.json",
       "production.db",
       "delivery-data.json",
       "일별 출고 수량 보고용 - 시트4.csv",
-
       "uploads/**/*",
-
       "dist/**/*"
-
     ],
-
     "targets": [
-
       "node18-win-x64",
-
       "node18-linux-x64",
-
       "node18-macos-x64"
-
     ]
-
   },
-
   "directories": {
-
     "example": "examples"
-
   },
-
   "dependencies": {
-
     "better-sqlite3": "^12.2.0",
-
     "body-parser": "^1.20.2",
-
     "cors": "^2.8.5",
-
-    "express": "^4.19.2",
-
+    "express": "^4.21.2",
     "googleapis": "^134.0.0",
-
     "multer": "^2.0.2",
-
     "xlsx": "^0.18.5"
-
   },
-
   "devDependencies": {
-
     "http-server": "^14.1.1",
-
     "pkg": "^5.8.1"
-
   },
-
   "scripts": {
-
     "test": "echo \"Error: no test specified\" && exit 1",
-
     "start": "npx http-server . -p 5173 -o",
-
     "start:server": "node server.js",
-
     "build": "pkg . --targets node18-win-x64,node18-linux-x64 --out-path ./dist",
-
     "seed:db": "node scripts/seed-before-build.js",
-    "build:win": "npm run seed:db && pkg . --targets node18-win-x64 --output ./dist/production-dashboard-win.exe",
-
+    "build:win": "npm run seed:db && pkg server.js --targets node18-win-x64 --output ./dist/production-dashboard-win.exe",
     "build:linux": "pkg . --targets node18-linux-x64 --output ./dist/production-dashboard-linux",
-
     "build:win-fixed": "pkg . --targets node18-win-x64 --output ./dist/dashboard-fixed-win.exe",
-
     "build:linux-fixed": "pkg . --targets node18-linux-x64 --output ./dist/dashboard-fixed-linux",
-
-    "build:all": "pkg . --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --out-path ./dist"
-
+    "build:all": "pkg . --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --out-path ./dist",
+    "context7:search": "node scripts/context7.js search",
+    "context7:docs": "node scripts/context7.js docs"
   },
-
   "repository": {
-
     "type": "git",
-
     "url": "git+https://github.com/comage9/delivery-dashboard.git"
-
   },
-
   "keywords": [],
-
   "author": "",
-
   "license": "ISC",
-
   "bugs": {
-
     "url": "https://github.com/comage9/delivery-dashboard/issues"
-
   },
-
   "homepage": "https://github.com/comage9/delivery-dashboard#readme"
-
 }
