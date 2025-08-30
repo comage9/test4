@@ -42,7 +42,9 @@ class ChartRenderer {
                 maintainAspectRatio: false,
                 scales: {
                     y: { beginAtZero: true, position: 'left', title: { display: true, text: '박스' } },
-                    y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '금액' } }
+                    y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '금액' },
+                      ticks: { callback: (v)=> (v??0).toLocaleString() }
+                    }
                 }
             }
         });
@@ -86,7 +88,9 @@ class ChartRenderer {
                 scales: {
                     x: { ticks: { autoSkip: true, maxRotation: 0 } },
                     y: { beginAtZero: true, position: 'left', title: { display: true, text: '박스' } },
-                    y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '금액' } }
+                    y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '금액' },
+                      ticks: { callback: (v)=> (v??0).toLocaleString() }
+                    }
                 }
             }
         });

@@ -88,7 +88,10 @@
                 <div class="overflow-x-auto hidden" id="detail-section">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="font-semibold" id="detail-title">상세</h3>
-                        <button id="back-btn" class="btn btn-sm">← 뒤로가기</button>
+                        <div class="flex items-center gap-2">
+                          <label class="label cursor-pointer gap-2"><input id="detail-only-selected" type="checkbox" class="checkbox checkbox-sm"><span class="label-text text-sm">선택 품목만</span></label>
+                          <button id="back-btn" class="btn btn-sm">← 뒤로가기</button>
+                        </div>
                     </div>
                     <table id="detail-table" class="table table-zebra w-full">
                         <thead>

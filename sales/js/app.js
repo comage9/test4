@@ -227,6 +227,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (backBtn) backBtn.addEventListener('click', () => {
         renderSummary();
     });
+    // 상세: 선택 품목만 보기 토글
+    const onlySelected = document.getElementById('detail-only-selected');
+    onlySelected?.addEventListener('change', () => {
+        const rows = detailTbody?.querySelectorAll('tr');
+        if (!rows) return;
+        if (!onlySelected.checked) { rows.forEach(r => r.classList.remove('hidden')); return; }
+        let highlighted = false;
+        rows.forEach(r => {
+            const isHL = r.classList.contains('bg-warning/30');
+            if (isHL) highlighted = true;
+            r.classList.toggle('hidden', !isHL);
+        });
+        if (!highlighted) alert('강조된(선택한) 품목이 없습니다. 먼저 자동완성으로 품목을 선택하세요.');
+    });
 
     // 메트릭 관련
     function labelForMetric(kind) {
@@ -262,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 검색 + 제안
-    function hideSuggest() { if (suggestBox) suggestBox.classList.add('hidden'); }
+    function hideSuggest() { if (suggestBox) { suggestBox.classList.add('hidden'); suggestBox.innerHTML=''; } suggestIndex=-1; }
     function showSuggest(items) {
         if (!suggestBox) return;
         if (!items || items.length === 0) { hideSuggest(); return; }

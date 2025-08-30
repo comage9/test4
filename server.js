@@ -472,6 +472,19 @@ app.get('/api/sales/items', (req, res) => {
   }
 });
 
+// 품목명 검색(부분 일치) - 제안용
+app.get('/api/sales/search-items', (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    const { q = '', start, end, limit = '10' } = req.query;
+    const term = String(q || '').trim();
+    const rows = salesDB.searchItems(term, String(start || ''), String(end || ''), parseInt(limit) || 10);
+    res.json({ success: true, data: rows });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // 로컬 기본 CSV(일별 출고 수량 보고용 - 시트4.csv)에서 DB 재적재
 // 기본 CSV 재적재 비활성화 (요구사항: 제거)
 // app.post('/api/delivery/import-default-csv', ...)

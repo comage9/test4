@@ -196,6 +196,24 @@ class SalesDatabase {
     }
     return Array.from(map.values()).sort((a,b)=> b.box_qty - a.box_qty || a.item.localeCompare(b.item));
   }
+
+  // 품목명 부분 일치 검색 (구간/제한)
+  searchItems(q, startIso, endIso, limit = 10) {
+    const term = String(q || '').trim().toLowerCase();
+    const rows = this.getRange(startIso || '0000-00-00', endIso || '9999-12-31');
+    const set = new Set();
+    const out = [];
+    for (const r of rows) {
+      const name = r.item || '';
+      if (!name) continue;
+      if (term && !name.toLowerCase().includes(term)) continue;
+      if (set.has(name)) continue;
+      set.add(name);
+      out.push(name);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
 }
 
 module.exports = SalesDatabase;
