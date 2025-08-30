@@ -25,7 +25,8 @@ credentials.json
 .env
 env
 env.*
-*.Zone.Identifier
+# Windows ADS metadata (downloaded-from-web markers)
+*Zone.Identifier
 .tokens
 /backup_pre_checkout_*/
 # Large local backups or exports not needed in repo
