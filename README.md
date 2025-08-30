@@ -4,8 +4,8 @@
 - Local (WSL/Windows/macOS/Linux):
   - Requirements: Node.js 18+ (권장 20), npm
   - Install: `npm ci`
-  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5174`
-  - Open: `http://localhost:5174`
+- Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5174`
+- Open: `http://localhost:5174` (비즈니스 분석 탭: `/?tab=sales`)
   - 참고: 지정 포트가 사용 중이면 다음 번호(예: 5175, 5176 ...)로 자동 증가하여 실행합니다.
 - Data persistence:
   - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
@@ -38,6 +38,53 @@
 - POST `/api/delivery/import-default-csv`: 기본 CSV에서 재적재(빈 DB일 때만 시드)
 - GET `/api/delivery/export.json|.xlsx`: 전체 데이터 다운로드
 - POST `/api/delivery/import`: JSON/CSV 업로드로 전체 교체
+
+---
+**For AI & New Contributors**
+
+- Entry points:
+  - `server.js` (Node/Express, 포트 5174, 사용 중이면 +1 자동 증가)
+  - 클라이언트: `index.html` (상단 탭, ?tab=sales로 비즈니스 분석 진입)
+  - 비즈니스 분석: `sales/` (차트/피벗 요약/상세, 업로드/검색/필터)
+
+- Data snapshot (동봉된 현재 데이터):
+  - `sales-data.json`: 판매 데이터 스냅샷(박스/낱개/금액). 서버가 자동 사용.
+  - `delivery-data.json`: 출고 시간별 누적 데이터.
+  - 생산 데이터는 `production-data.json`(스냅샷) 또는 로컬 `production.db`(무시 대상)를 사용.
+
+- How to continue on a new machine:
+  1) `npm ci`
+  2) `npm start` (또는 `node server.js`)
+  3) 브라우저: `http://localhost:5174/?tab=sales`
+  4) 판매 CSV 업로드: 비즈니스 분석 상단의 업로드 버튼 (CSV 전용)
+
+- Business Analytics page features:
+  - 차트 고정 크기 + 일별추이(박스 라벨) + 금액 동시 표시
+  - 카테고리 멀티선택 필터 → 요약/차트/상세 모두 반영
+  - 검색 자동완성(품목명 일부 입력) → 클릭/Enter 시 해당 품목 최신 출현 상세로 이동 + 하이라이트, "선택 품목만" 토글 제공
+  - 피벗 요약: 행=분류, 열=날짜×[수량(박스), 판매금액], 하단 합계, 열별 히트맵, 셀 클릭 시 품목 상세
+
+- Key server endpoints for sales:
+  - GET `/api/sales/range?start&end` → 일별 합계(박스/낱개/금액)
+  - GET `/api/sales/summary?start&end` → 분류 합계(박스/낱개/금액)
+  - GET `/api/sales/raw?start&end&page&pageSize` → 원자료 페이징
+  - GET `/api/sales/daily-category?start&end` → 일자×분류 피벗용 합계(박스/낱개/금액)
+  - GET `/api/sales/items?date&category` → 품목별 합계(박스/낱개/금액)
+  - GET `/api/sales/search-items?q&start&end&limit` → 품목명 자동완성 제안
+
+- Dev notes:
+  - 포트 충돌 시 자동 증가(5174→5175... 최대 10회)
+  - 정적 프록시 사용 없이 동일 오리진 API 우선
+  - 대용량 구간에서는 서버 집계 API 사용, 실패 시 클라이언트 폴백
+  - 도커: `docker compose up -d --build` (포트/볼륨은 5174 매핑)
+
+- Conventions:
+  - 데이터 파일은 루트(`sales-data.json`, `delivery-data.json`) 스냅샷 사용
+  - 민감/대용량 원본(`data/`, `*.db`, `uploads/`)은 커밋 제외
+  - 기능 작업 시: 서버 API → 데이터매니저 → 앱(js) → HTML 순의 흐름 유지
+
+- Next ideas (optional):
+  - 자동완성 서버 우선화, 금액 축 단위(만원/억원) 자동 변환, 피벗 스티키 헤더/좌고정, 가상 스크롤
 
 ---
 # 배포, 환경 변수, 릴리스 정리

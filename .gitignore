@@ -23,7 +23,7 @@ delivery-dashboard.exe
 *.db
 uploads/
 data/
-sales-data.json
+!sales-data.json
 vf 출고 수량 ocr google 보고서*.csv
 
 # Secrets
