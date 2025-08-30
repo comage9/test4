@@ -41,3 +41,7 @@ env.*
 
 # CSV and data files are kept by default.
 # If you prefer to exclude big CSVs or JSON backups, add patterns here.
+
+# temp artifacts
+{8600F937-C5F3-4448-BBC7-B6F62A6AA0AC}.png
+{956E69D1-0259-4618-9B6B-AAF2472DEB73}.png
