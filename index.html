@@ -19,7 +19,7 @@
 </head>
 <body class="bg-base-100">
     <!-- 헤더 -->
-    <header class="navbar bg-primary text-primary-content shadow-lg">
+    <header class="navbar bg-primary text-primary-content shadow-lg sticky top-0 z-50">
         <div class="navbar-start">
             <h1 class="text-xl font-bold">통합 대시보드</h1>
         </div>
@@ -61,6 +61,9 @@
             </div>
         </div>
     </nav>
+
+    <!-- Breadcrumb -->
+    <div id="breadcrumb" class="container mx-auto px-4 py-2 text-sm text-base-content/70"></div>
 
     <!-- 출고 현황 대시보드 -->
     <div id="delivery-dashboard" class="dashboard-content">
@@ -206,7 +209,7 @@
 
     <!-- 비즈니스 분석 대시보드 -->
     <div id="sales-dashboard" class="dashboard-content hidden">
-        <iframe src="sales/index.html" class="w-full h-screen border-0"></iframe>
+        <iframe id="sales-iframe" src="sales/index.html" class="w-full border-0" style="height: calc(100vh - 140px);"></iframe>
     </div>
 
     <!-- 로딩 모달 -->
@@ -291,17 +294,31 @@
                     switchTab(tab);
                 }
             } catch (_) {}
+
+            // 초기 크기 계산
+            resizeSalesIframe();
+            window.addEventListener('resize', () => { resizeSalesIframe(); });
         });
 
         // 탭 전환 함수
         function switchTab(tabName) {
             // 모든 탭과 대시보드 숨기기
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('tab-active'));
-            document.querySelectorAll('.dashboard-content').forEach(content => content.classList.add('hidden'));
+            document.querySelectorAll('.dashboard-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('opacity-100');
+                content.classList.add('opacity-0');
+            });
 
             // 선택된 탭과 대시보드 보이기
             document.getElementById(tabName + '-tab').classList.add('tab-active');
-            document.getElementById(tabName + '-dashboard').classList.remove('hidden');
+            const target = document.getElementById(tabName + '-dashboard');
+            target.classList.remove('hidden');
+            target.classList.add('transition-opacity','duration-200');
+            requestAnimationFrame(() => {
+              target.classList.remove('opacity-0');
+              target.classList.add('opacity-100');
+            });
 
             // 상태 배지 업데이트
             const statusBadge = document.getElementById('status-badge');
@@ -315,6 +332,33 @@
                 const url = new URL(location.href);
                 url.searchParams.set('tab', tabName);
                 history.replaceState(null, '', url.toString());
+            } catch (_) {}
+
+            // breadcrumb 갱신
+            updateBreadcrumb(tabName);
+
+            // sales iframe 사이즈 보정
+            if (tabName === 'sales') resizeSalesIframe();
+        }
+
+        function updateBreadcrumb(tab) {
+            const map = { delivery: '출고 현황', sales: '비즈니스 분석' };
+            const el = document.getElementById('breadcrumb');
+            if (!el) return;
+            const label = map[tab] || '출고 현황';
+            el.innerHTML = `<span class="text-base-content/60">대시보드</span> · <span class="font-medium">${label}</span>`;
+        }
+
+        function resizeSalesIframe() {
+            const iframe = document.getElementById('sales-iframe');
+            if (!iframe) return;
+            try {
+                const header = document.querySelector('header.navbar');
+                const nav = document.querySelector('nav');
+                const bc = document.getElementById('breadcrumb');
+                const h = (header?.offsetHeight || 0) + (nav?.offsetHeight || 0) + (bc?.offsetHeight || 0) + 24; // padding 여유
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                iframe.style.height = Math.max(320, vh - h) + 'px';
             } catch (_) {}
         }
     </script>
