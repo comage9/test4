@@ -23,7 +23,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 5173;
+const PORT = process.env.PORT || 5174;
 
 // 파일 변경 감지를 위한 변수들
 let excelFileWatcher = null;
@@ -1057,7 +1057,7 @@ function startServer(port, retries = 10) {
   }
 }
 
-startServer(Number(PORT) || 5173);
+startServer(Number(PORT) || 5174);
 
 // 프로세스 종료 시 정리
 

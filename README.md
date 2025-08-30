@@ -4,8 +4,9 @@
 - Local (WSL/Windows/macOS/Linux):
   - Requirements: Node.js 18+ (권장 20), npm
   - Install: `npm ci`
-  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5173`
-  - Open: `http://localhost:5173`
+  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5174`
+  - Open: `http://localhost:5174`
+  - 참고: 지정 포트가 사용 중이면 다음 번호(예: 5175, 5176 ...)로 자동 증가하여 실행합니다.
 - Data persistence:
   - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
   - 생산 DB: `production.db` (SQLite). 첫 실행 시 템플릿/엑셀에서 시드될 수 있음.
@@ -76,8 +77,9 @@
 - Local (WSL/Windows/macOS/Linux):
   - Requirements: Node.js 18+ (권장 20), npm
   - Install: `npm ci`
-  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5173`
-  - Open: `http://localhost:5173`
+  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5174`
+  - Open: `http://localhost:5174`
+  - 참고: 지정 포트가 사용 중이면 다음 번호(예: 5175, 5176 ...)로 자동 증가하여 실행합니다.
 - Data persistence:
   - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
   - 생산 DB: `production.db` (SQLite). 첫 실행 시 템플릿/엑셀에서 시드될 수 있음.
