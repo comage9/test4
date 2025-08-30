@@ -26,6 +26,11 @@ credentials.json
 env
 env.*
 *.Zone.Identifier
+.tokens
+/backup_pre_checkout_*/
+# Large local backups or exports not needed in repo
+/production-data-backup-*.json
+/vf 출고 수량 ocr google 보고서 - 일별 출고 수량.csv
 
 # CSV and data files are kept by default.
 # If you prefer to exclude big CSVs or JSON backups, add patterns here.
