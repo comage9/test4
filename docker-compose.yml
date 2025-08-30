@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: delivery-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Adjust to persist DB outside the container if desired
+      - DELIVERY_DB_PATH=/data/production.db
+    volumes:
+      - ./production.db:/data/production.db
+      - ./uploads:/app/uploads
+    restart: unless-stopped

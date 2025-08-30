@@ -39,6 +39,37 @@
 - POST `/api/delivery/import`: JSON/CSV 업로드로 전체 교체
 
 ---
+# 배포, 환경 변수, 릴리스 정리
+
+## ⚙️ 환경 변수
+- `PORT`: 서비스 포트(기본 3000)
+- `DELIVERY_DB_PATH`: SQLite DB 파일 경로(미설정 시 프로젝트 루트의 `production.db` 사용)
+- Google API 사용 시 `credentials.json` 경로 등 추가 환경 변수 설정 가능
+
+## 🚢 배포 옵션
+
+### Docker
+1) 빌드 및 실행: `docker compose up -d --build`
+2) 기본 매핑
+- 포트: `3000:3000`
+- 데이터베이스: `./production.db` ↔ `/data/production.db`
+- 업로드: `./uploads` ↔ `/app/uploads`
+
+### PM2
+1) 설치: `npm i -g pm2`
+2) 실행: `pm2 start ecosystem.config.js`
+3) 상태/로그: `pm2 status`, `pm2 logs`
+4) 부팅 자동시작: `pm2 startup && pm2 save`
+
+## 🔒 보안/정책
+- 비밀 정보는 커밋 금지: `.tokens`, `credentials.json` 등은 `.gitignore`로 제외됨
+- 대용량/백업 파일 제외: `production-data-backup-*.json`, `*.bak`, `uploads/` 등
+
+## 🏷️ 릴리스 & 태그
+- 현재 버전: `package.json` → `version` (예: 1.0.0)
+- 태그 생성: `git tag -a v1.0.0 -m "Release v1.0.0"`
+- 태그 푸시: `git push origin v1.0.0`
+
 # Chart MCP 대시보드 플랫폼
 
 ## 🚀 Quickstart
