@@ -280,6 +280,17 @@
                 console.error('대시보드 초기화 실패:', error);
                 alert('대시보드 초기화에 실패했습니다: ' + error.message);
             }
+            // 쿼리/해시로 탭 활성화 지원 (?tab=sales 또는 #tab=sales)
+            try {
+                const params = new URLSearchParams(location.search || '');
+                let tab = params.get('tab');
+                if (!tab && location.hash && /^#tab=/.test(location.hash)) {
+                    tab = location.hash.replace(/^#tab=/, '');
+                }
+                if (tab && ['delivery','sales'].includes(tab)) {
+                    switchTab(tab);
+                }
+            } catch (_) {}
         });
 
         // 탭 전환 함수
@@ -299,6 +310,12 @@
             } else {
                 statusBadge.style.display = 'none';
             }
+            // URL에 탭 표시(북마크/새로고침 유지)
+            try {
+                const url = new URL(location.href);
+                url.searchParams.set('tab', tabName);
+                history.replaceState(null, '', url.toString());
+            } catch (_) {}
         }
     </script>
 </body>
