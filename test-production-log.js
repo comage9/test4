@@ -5,7 +5,7 @@ async function testAPI(endpoint, description) {
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'localhost',
-            port: 5173,
+            port: 5174,
             path: endpoint,
             method: 'GET'
         };
@@ -113,9 +113,9 @@ async function runTests() {
         }
 
         console.log('\n🔗 접속 정보:');
-        console.log('   - 메인 페이지: http://localhost:5173');
-        console.log('   - 생산일지 페이지: http://localhost:5173/production-log.html');
-        console.log('   - API 엔드포인트: http://localhost:5173/api/production-log');
+        console.log('   - 메인 페이지: http://localhost:5174');
+        console.log('   - 생산일지 페이지: http://localhost:5174/production-log.html');
+        console.log('   - API 엔드포인트: http://localhost:5174/api/production-log');
 
     } catch (error) {
         console.log('\n❌ 테스트 중 오류 발생:', error.message);

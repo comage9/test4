@@ -72,8 +72,8 @@ chmod +x ./dist/production-dashboard-linux
 
 ## 실행 후 접속 및 데이터 I/O
 실행파일을 실행하면 다음 주소로 접속할 수 있습니다:
-- 로컬: http://localhost:5173
-- 외부: http://bonohouse.p-e.kr:5173 (DNS 설정된 경우)
+- 로컬: http://localhost:5174
+- 외부: http://bonohouse.p-e.kr:5174 (DNS 설정된 경우)
 
 ### 출고 DB 내보내기/가져오기
 - JSON 다운로드: `GET /api/delivery/export.json`
@@ -99,9 +99,9 @@ chmod +x ./dist/production-dashboard-linux
 - examples/생산일지.xlsx 파일이 올바른 위치에 있는지 확인
 
 ### 포트 충돌 오류
-- 다른 프로그램이 5173 포트를 사용 중인지 확인
-- Windows: `netstat -ano | findstr :5173`
-- Linux: `lsof -i :5173`
+- 다른 프로그램이 5174 포트를 사용 중인지 확인
+- Windows: `netstat -ano | findstr :5174`
+- Linux: `lsof -i :5174`
 
 ## 파일 크기 최적화
 실행파일 크기를 줄이려면:

@@ -10,6 +10,7 @@ const http = require('http');
 const { URL } = require('url');
 const ProductionDatabase = require('./database-json');
 const DeliveryDatabase = require('./delivery-database');
+const SalesDatabase = require('./sales-database');
 
 // Log __dirname at the very beginning
 console.log('__dirname:', __dirname);
@@ -23,7 +24,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 5173;
+const PORT = process.env.PORT || 5174;
 
 // 파일 변경 감지를 위한 변수들
 let excelFileWatcher = null;
@@ -33,6 +34,7 @@ let connectedClients = new Set();
 // 데이터베이스 인스턴스
 let productionDB = null;
 let deliveryDB = null;
+let salesDB = null;
 
 app.use(cors());
 
@@ -374,6 +376,97 @@ app.post('/api/delivery/import', uploadAny.single('file'), (req, res) => {
     try { fs.unlinkSync(filePath); } catch {}
     notifyClientsOfUpdate();
     res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// =====================
+// Sales API (VF CSV)
+// =====================
+
+// CSV 업로드 → 판매 DB로 변환/저장
+app.post('/api/sales/import', uploadAny.single('file'), (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    if (!req.file) return res.status(400).json({ success: false, message: 'file field required' });
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    if (ext !== '.csv') {
+      try { fs.unlinkSync(filePath); } catch {}
+      return res.status(400).json({ success: false, message: 'csv only' });
+    }
+    const result = salesDB.importFromCsvFile(filePath);
+    try { fs.unlinkSync(filePath); } catch {}
+    notifyClientsOfUpdate();
+    res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 날짜 구간 집계(일별 합계)
+app.get('/api/sales/range', (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ success: false, message: 'start and end required (YYYY-MM-DD)' });
+    const daily = salesDB.getDailyTotals(String(start), String(end));
+    res.json({ success: true, data: daily });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 카테고리 합계(금액/수량)
+app.get('/api/sales/summary', (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ success: false, message: 'start and end required (YYYY-MM-DD)' });
+    const cats = salesDB.getCategoryTotals(String(start), String(end));
+    res.json({ success: true, data: cats });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 원자료 일부 조회(테이블용)
+app.get('/api/sales/raw', (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    const { start, end, page = '1', pageSize = '100' } = req.query;
+    if (!start || !end) return res.status(400).json({ success: false, message: 'start and end required (YYYY-MM-DD)' });
+    const all = salesDB.getRange(String(start), String(end));
+    const p = parseInt(page) || 1; const ps = parseInt(pageSize) || 100;
+    const slice = all.slice((p-1)*ps, (p-1)*ps + ps);
+    res.json({ success: true, total: all.length, page: p, pageSize: ps, data: slice });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 일자+분류 기준 박스 수량 합계
+app.get('/api/sales/daily-category', (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ success: false, message: 'start and end required (YYYY-MM-DD)' });
+    const data = salesDB.getDailyCategoryTotals(String(start), String(end));
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 특정 일자+분류의 품목별 박스 수량 합계
+app.get('/api/sales/items', (req, res) => {
+  try {
+    if (!salesDB) return res.status(500).json({ success: false, message: 'Sales DB not initialized' });
+    const { date, category } = req.query;
+    if (!date) return res.status(400).json({ success: false, message: 'date required (YYYY-MM-DD)' });
+    const data = salesDB.getItemsByDateCategoryTotals(String(date), String(category || ''));
+    res.json({ success: true, data });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -1022,15 +1115,42 @@ function startServer(port, retries = 10) {
         // 초기 CSV에서 출고 데이터 시드(최초 비어있을 때만)
         try {
           const count = (deliveryDB.getAll() || []).length;
-          const csvPath = path.join(__dirname, '일별 출고 수량 보고용 - 시트4.csv');
-          if (count === 0 && fs.existsSync(csvPath)) {
-            const result = deliveryDB.importFromCsvFile(csvPath);
-            if (result.imported) console.log(`Delivery CSV imported: ${result.imported} rows`);
+          // 우선순위 1: vf 출고 수량 ocr google 보고서 - 일별 출고 수량.csv
+          const vfCsvPath = path.join(__dirname, 'vf 출고 수량 ocr google 보고서 - 일별 출고 수량.csv');
+          // 우선순위 2: 일별 출고 수량 보고용 - 시트4.csv (기존 파일)
+          const legacyCsvPath = path.join(__dirname, '일별 출고 수량 보고용 - 시트4.csv');
+          if (count === 0) {
+            if (fs.existsSync(vfCsvPath)) {
+              const result = deliveryDB.importFromCsvFile(vfCsvPath);
+              if (result.imported) console.log(`Delivery CSV imported from VF report: ${result.imported} rows`);
+            } else if (fs.existsSync(legacyCsvPath)) {
+              const result = deliveryDB.importFromCsvFile(legacyCsvPath);
+              if (result.imported) console.log(`Delivery CSV imported from legacy sheet4: ${result.imported} rows`);
+            } else {
+              console.log('No initial delivery CSV found. Skipping seed.');
+            }
           } else {
             console.log(`Skip delivery CSV import on start (existing rows: ${count})`);
           }
         } catch (e) {
           console.log('Delivery CSV import check failed:', e.message);
+        }
+      }
+
+      if (!salesDB) {
+        salesDB = new SalesDatabase();
+        console.log('Sales DB initialized');
+        // 초기 VF CSV로 시드 (존재하면)
+        try {
+          const vfCsvPath = path.join(__dirname, 'vf 출고 수량 ocr google 보고서 - 일별 출고 수량.csv');
+          const stat = fs.existsSync(vfCsvPath);
+          const cur = (salesDB.getRange('0000-00-00', '9999-12-31') || []).length;
+          if (cur === 0 && stat) {
+            const result = salesDB.importFromCsvFile(vfCsvPath);
+            if (result.count) console.log(`Sales CSV imported: ${result.count} rows`);
+          }
+        } catch (e) {
+          console.warn('Sales CSV seed skipped:', e.message);
         }
       }
 
@@ -1057,7 +1177,7 @@ function startServer(port, retries = 10) {
   }
 }
 
-startServer(Number(PORT) || 5173);
+startServer(Number(PORT) || 5174);
 
 // 프로세스 종료 시 정리
 

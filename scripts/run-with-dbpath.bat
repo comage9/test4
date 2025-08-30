@@ -8,7 +8,7 @@ if "%DELIVERY_DB_PATH%"=="" (
   echo [INFO] Using DELIVERY_DB_PATH=%DELIVERY_DB_PATH%
 )
 REM 포트를 지정하려면 주석 해제 후 사용
-REM set PORT=5173
+REM set PORT=5174
 
 set EXE=dist\production-dashboard-win.exe
 if not exist "%EXE%" (

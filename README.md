@@ -4,8 +4,8 @@
 - Local (WSL/Windows/macOS/Linux):
   - Requirements: Node.js 18+ (권장 20), npm
   - Install: `npm ci`
-  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5173`
-  - Open: `http://localhost:5173`
+  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5174`
+  - Open: `http://localhost:5174`
   - 참고: 지정 포트가 사용 중이면 다음 번호(예: 5175, 5176 ...)로 자동 증가하여 실행합니다.
 - Data persistence:
   - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
@@ -77,8 +77,8 @@
 - Local (WSL/Windows/macOS/Linux):
   - Requirements: Node.js 18+ (권장 20), npm
   - Install: `npm ci`
-  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5173`
-  - Open: `http://localhost:5173`
+  - Run: `node server.js` (또는 `npm run start`), 포트: `PORT` 환경변수 또는 `5174`
+  - Open: `http://localhost:5174`
   - 참고: 지정 포트가 사용 중이면 다음 번호(예: 5175, 5176 ...)로 자동 증가하여 실행합니다.
 - Data persistence:
   - 출고 DB: `delivery-data.json` (앱 루트). 서버 기동 시 DB가 비어있을 때만 기본 CSV로 시드(덮어쓰기 방지).
@@ -433,7 +433,7 @@ app.init();
 
 ## 포트 설정
 
-- 기본 시작 포트: `5173` (사용 중이면 자동으로 5174, 5175 … 증가)
+- 기본 시작 포트: `5174` (사용 중이면 자동으로 5175, 5176 … 증가)
 
 ## 📊 차트 타입
 

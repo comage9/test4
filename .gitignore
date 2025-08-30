@@ -9,6 +9,8 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+*.swp
+*.swx
 
 # Binaries and large build outputs
 *.exe
@@ -20,6 +22,9 @@ delivery-dashboard.exe
 # Databases and uploads
 *.db
 uploads/
+data/
+sales-data.json
+vf 출고 수량 ocr google 보고서*.csv
 
 # Secrets
 credentials.json

@@ -239,11 +239,11 @@
             try {
                 console.log('Page loaded, initializing dashboard...');
 
-                // API 베이스 자동 탐지: 현재 오리진 → 5173~5180 순회
+                // API 베이스 자동 탐지: 현재 오리진 → 5174~5181 순회
                 const host = location.hostname || 'localhost';
                 const candidates = [];
                 candidates.push(location.origin);
-                for (let p = 5173; p <= 5180; p++) {
+                for (let p = 5174; p <= 5181; p++) {
                     const base = `${location.protocol}//${host}:${p}`;
                     if (!candidates.includes(base)) candidates.push(base);
                 }

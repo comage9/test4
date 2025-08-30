@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 <body class="bg-base-100">
     <div class="container mx-auto p-6">
@@ -17,10 +18,11 @@
             <div class="card-body">
                 <h2 class="card-title">데이터 관리 및 필터</h2>
                 <div class="flex justify-between items-center">
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 items-center">
                         <input type="file" id="csv-upload" class="file-input file-input-bordered w-full max-w-xs" accept=".csv" />
-                        <button id="upload-btn" class="btn btn-primary">업로드</button>
-                        <button id="download-btn" class="btn btn-secondary">다운로드</button>
+                        <button id="upload-btn" class="btn btn-primary">CSV → DB 업로드</button>
+                        <button id="download-btn" class="btn btn-secondary">엑셀 다운로드</button>
+                        <span id="api-status" class="badge">연결 확인 중...</span>
                     </div>
                     <div class="flex space-x-2 items-center">
                         <label for="start-date">시작일:</label>
@@ -30,55 +32,85 @@
                         <button id="filter-btn" class="btn btn-accent">조회</button>
                     </div>
                 </div>
+                <div class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">표시 기준</span></label>
+                        <div class="join">
+                            <input class="join-item btn btn-sm" type="radio" name="metric" id="metric-box" value="box" checked>
+                            <label for="metric-box" class="join-item btn btn-sm">박스</label>
+                            <input class="join-item btn btn-sm" type="radio" name="metric" id="metric-ea" value="ea">
+                            <label for="metric-ea" class="join-item btn btn-sm">낱개</label>
+                            <input class="join-item btn btn-sm" type="radio" name="metric" id="metric-amount" value="amount">
+                            <label for="metric-amount" class="join-item btn btn-sm">금액</label>
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">분류 선택(다중)</span></label>
+                        <select id="category-select" multiple class="select select-bordered min-h-[3rem]"></select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">검색(일자/분류)</span></label>
+                        <input id="search-input" type="text" placeholder="예: 2025-08 또는 'A카테고리'" class="input input-bordered" />
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-1 gap-6 mb-6">
             <div class="card bg-base-200 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title">카테고리별 판매금액</h2>
-                    <canvas id="category-chart"></canvas>
+                    <h2 class="card-title">카테고리별 판매 (박스/금액)</h2>
+                    <canvas id="category-chart" width="1200" height="420"></canvas>
                 </div>
             </div>
             <div class="card bg-base-200 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title">일별 판매 추이</h2>
-                    <canvas id="trend-chart"></canvas>
+                    <h2 class="card-title">일별 판매 추이(박스/금액)</h2>
+                    <canvas id="trend-chart" width="1200" height="420"></canvas>
                 </div>
             </div>
         </div>
 
         <div class="card bg-base-200 shadow-xl mb-6">
             <div class="card-body">
-                <h2 class="card-title">판매 데이터</h2>
-                <div class="overflow-x-auto">
-                    <table id="data-table" class="table table-zebra w-full">
+                <h2 class="card-title">판매 원자료(구간) - 일자/분류 요약</h2>
+                <p class="text-sm text-base-content/70 mb-2">행을 클릭하면 해당 일자·분류의 품목별 박스 수량 상세를 표시합니다.</p>
+                <div class="overflow-x-auto" id="summary-section">
+                    <table id="summary-table" class="table w-full">
+                        <thead id="summary-thead"></thead>
+                        <tbody id="summary-tbody"></tbody>
+                    </table>
+                    <div class="mt-2 flex gap-2">
+                        <button id="summary-download" class="btn btn-sm">요약 CSV 다운로드</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto hidden" id="detail-section">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold" id="detail-title">상세</h3>
+                        <button id="back-btn" class="btn btn-sm">← 뒤로가기</button>
+                    </div>
+                    <table id="detail-table" class="table table-zebra w-full">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>일자</th>
-                                <th>바코드</th>
-                                <th>수량(박스)</th>
-                                <th>수량(낱개)</th>
                                 <th>품목</th>
-                                <th>분류</th>
+                                <th>박스 수량</th>
                                 <th>판매금액</th>
                             </tr>
                         </thead>
-                        <tbody>
-                        </tbody>
+                        <tbody id="detail-tbody"></tbody>
                     </table>
-                </div>
-                <div class="btn-group mt-4 self-center">
-                    <button id="prev-page" class="btn">«</button>
-                    <button id="page-info" class="btn">Page 1</button>
-                    <button id="next-page" class="btn">»</button>
+                    <div class="mt-2 flex gap-2">
+                        <button id="detail-download" class="btn btn-sm">상세 CSV 다운로드</button>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
 
+    <script>
+      if (window.Chart && window.ChartDataLabels) { Chart.register(ChartDataLabels); }
+    </script>
     <script src="js/data-manager.js"></script>
     <script src="js/chart-renderer.js"></script>
     <script src="js/app.js"></script>
